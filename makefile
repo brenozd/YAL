@@ -25,6 +25,7 @@ EXT = .l
 SRC_FILES = $(wildcard $(SRC)/*$(EXT))
 LEX_FILES = $(SRC_FILES:$(SRC)/%$(EXT)=$(OBJ)/%.yy.c)
 YACC_FILES = $(SRC_FILES:$(SRC)/%$(EXT)=$(OBJ)/%.tab.c)
+
 #####################
 ###### Targets ######
 #####################
@@ -33,6 +34,7 @@ all: cleand $(APPNAME) run
 # Build Application
 $(APPNAME) : $(LEX_FILES) $(YACC_FILES)
 	@echo "🚧 Building..."
+	test -d $(BIN) || mkdir $(BIN)
 	$(CXX) $(CXX_FLAGS) $^ -o  $(BIN)/$@.out $(LD_FLAGS)
 
 #Run executable
@@ -57,9 +59,11 @@ cleand:
 #Create yy.c file
 .PHONY: lex
 $(OBJ)/%.yy.c: $(SRC)/%.l
+	test -d $(OBJ) || mkdir $(OBJ)
 	$(LEX) $(LEX_FLAGS) $@ $<
 
 #Create .tab.c file
 .PHONY: bison
 $(OBJ)/%.tab.c: $(SRC)/%.y
+	test -d $(OBJ) || mkdir $(OBJ)
 	$(YACC) $(YACC_FLAGS) $@ $<

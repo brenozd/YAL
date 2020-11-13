@@ -1,4 +1,11 @@
+# Folders
+/[Bb]in/
+/[Oo]bj/
+/.vscode/
+
 # Prerequisites
+*.code-workspace
+.DS_Store
 *.d
 
 # Compiled Object files

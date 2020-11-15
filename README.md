@@ -16,3 +16,8 @@ Just type
 > make
 
 to build and run.
+
+### Useful information
+*[Byson 3.7.1 Rules](https://www.gnu.org/software/bison/manual/bison.html#Rules)
+*[Flex 2.6.3 Manual](https://www.cs.virginia.edu/~cr4bd/flex-manual/)
+*[YAL Documentation](https://docs.google.com/document/d/187IWDN3ne1S4CgiLUV49USASiqZ8ZkLdMegdtWgJsO4/edit#heading=h.hcfsn8dd2dw4)

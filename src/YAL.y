@@ -10,58 +10,85 @@ extern FILE* yyin;
 void yyerror(const char* s);
 %}
 
-%token INIT
-%token BLOCK_B
-%token BLOCK_E
+//Program Entry Point
+%start program
+
+//Symbols
+%token T_QUOTE
+%token T_EOL T_EOS
+
+//Blocks
+%token T_INIT
+%token T_BLOCK_B
+%token T_BLOCK_E
 
 //Types
-%token INTEGER
-%token FLOAT
-%token CHAR
-%token STRING
+%token T_ID
+%right T_ASSGN
+%left T_INTEGER T_FLOAT T_CHAR T_STRING
 
 //IO
-%token IN
-%token OUT
+%left T_IN T_OUT
 
 //Relational
-%token EQUAL
-%token DIF
-%token GREAT
-%token LESS
-%token GE
-%token LE
+%left T_EQUAL T_DIF T_GREAT T_LESS T_GE T_LE
 
 //Arithmetich
-%token SUM
-%token SUB
-%token MULT
-%token DIV
-%token POW
-%token MOD
+%left T_SUM T_SUB T_MULT T_DIV T_POW T_MOD
 
 //Logical
-%token AND
-%token OR
-%token NOT
-%token XOR
+%left T_AND T_OR T_NOT T_XOR
 
 //Structures
-%token FOR
-%token WHILE
-%token IF
-%token ELSE
+%token T_FOR T_WHILE T_IF T_ELSE
 
 %%
-block: BLOCK_B BLOCK_E {fprintf(stderr, "%s\n", "Block");};
+program: 
+            T_INIT T_BLOCK_B statement_list T_BLOCK_E
+            ;
+
+statement_list: 
+            statement_list statements  
+          | statements
+          ;
+
+statements:  
+                declare
+                | T_EOL
+                ;
+
+declare: 
+          T_ID T_EOS
+          | T_ID T_ASSGN type T_EOS
+          ;
+
+type:
+          T_INTEGER
+          | T_FLOAT
+          | T_CHAR
+          | T_STRING
+          ;
 %%
 
 void main(int argc, char **argv)
 {
-  yyparse();
+  #ifdef YYDEBUG
+  yydebug = 1;
+  #endif
+
+  yyin = fopen(argv[1], "r");
+	
+   if(!yyparse())
+		printf("\nParsing complete\n");
+	else
+	{
+		printf("\nParsing failed\n");
+		exit(0);
+	}
+	fclose(yyin);
 }
 
 void yyerror(const char *s)
 {
-  fprintf(stderr, "error: %s\n", s);
+  fprintf(stderr, "ERROR: %s\n", s);
 }

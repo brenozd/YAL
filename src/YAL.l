@@ -3,54 +3,74 @@
 
 %{
 #include <stdio.h>
-
-#define YY_DECL int yylex()
+#include <stdlib.h>
 
 # include "YAL.tab.h"
 %}
 
+alpha [a-zA-Z]
+special [_$]
+digit [0-9]
+quote '
 %%
+    /*Symbols*/
+"'"                     { return T_QUOTE;           }
+";"                     { return T_EOS;             } 
+"\n"                    { /* ignore newline */      }    
+[ \t]                   { /* ignore whitespace */   }
+
     /*Blocks*/
-"_init"             { return INIT;     } 
-"{"|"begin"         { return BLOCK_B;  }
-"}"|"end"           { return BLOCK_E;  }
+"_init"                 { return T_INIT;            } 
+"{"|"begin"             { return T_BLOCK_B;         }
+"}"|"end"               { return T_BLOCK_E;         }
+"#".*                   { /* ignore comments */     }
 
     /*Types*/
-[+-]?[0-9]+         { return INTEGER;  }
-[+-]?[0-9]*.?[0-9]+ { return FLOAT;    }
-[a-zA-Z]            { return CHAR;     }
-[a-zA-Z]+           { return STRING;   }
+[+-]?{digit}+           { yylval = atoi(yytext); 
+                            return T_INTEGER;       }
+[+-]?{digit}*"."{digit}+    { 
+                          yylval = atoi(yytext);
+                          return T_FLOAT;           }
+{alpha}                 { return T_CHAR;            }
+{quote}CHAR+{quote}     { return T_STRING;          }
 
     /*IO*/
-"in"|"<<"           { return IN;       }
-"out"|">>"          { return OUT;      }
+"in"|"<<"               { return T_IN;              }
+"out"|">>"              { return T_OUT;             }
 
     /*Relational*/
-"=="                { return EQUAL;    }
-"!="|"<>"           { return DIF;      }
-">"                 { return GREAT;    }
-"<"                 { return LESS;     }
-">="                { return GE;       }
-"<="                { return LE;       }
+"="                     { return T_ASSGN;           }
+"=="                    { return T_EQUAL;           }
+"!="|"<>"               { return T_DIF;             }
+">"                     { return T_GREAT;           }
+"<"                     { return T_LESS;            }
+">="                    { return T_GE;              }
+"<="                    { return T_LE;              }
 
     /*Arithmetic*/
-"+"                 { return SUM;      }
-"-"                 { return SUB;      }
-"*"                 { return MULT;     }
-"/"                 { return DIV;      }
-"^"                 { return POW;      }
-"%"                 { return MOD;      }
+"+"                     { return T_SUM;             }
+"-"                     { return T_SUB;             }
+"*"                     { return T_MULT;            }
+"/"                     { return T_DIV;             }
+"^"                     { return T_POW;             }
+"%"                     { return T_MOD;             }
 
     /*Logical*/
-"and"|"&&"          { return AND;      }
-"or"|"||"           { return OR;       }
-"not"|"!"           { return NOT;      }
-"xor"               { return XOR;      }
+"and"|"&&"              { return T_AND;             }
+"or"|"||"               { return T_OR;              }
+"not"|"!"               { return T_NOT;             }
+"xor"                   { return T_XOR;             }
 
     /*Structures*/
-"for"               { return FOR;      }
-"while"             { return WHILE;    }
-"if"                { return IF;       }
-"else"              { return ELSE;     }
+"for"                   { return T_FOR;             }
+"while"                 { return T_WHILE;           }
+"if"                    { return T_IF;              }
+"else"                  { return T_ELSE;            }
 
+    /*Declaration*/
+({alpha}|{special}|{digit})({alpha}|{digit})* { 
+                          return T_ID;              }
+
+    /*Anything*/
+.                       { return *yytext;       }
 %%

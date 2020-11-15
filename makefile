@@ -4,13 +4,14 @@
 LEX = flex
 LEX_FLAGS = -o
 YACC = bison
-YACC_FLAGS = -dtv -o
+YACC_FLAGS = -dtvk -o
 
 CXX = gcc
-CXX_FLAGS = -g
+CXX_FLAGS = -g -DYYDEBUG=1
 LD_FLAGS = 
-APPNAME = YAL
 
+APPNAME = YAL
+ARGS =
 #####################
 #### Dir Settings ###
 #####################
@@ -42,7 +43,7 @@ $(APPNAME) : $(LEX_FILES) $(YACC_FILES)
 run:
 	clear
 	@echo "🚀 Running..."
-	./$(BIN)/$(APPNAME).out
+	./$(BIN)/$(APPNAME).out $(ARGS)
 
 #Clean executable
 .PHONY: clean

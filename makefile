@@ -29,7 +29,7 @@ YACC_FILES = $(SRC_FILES:$(SRC)/%$(EXT)=$(OBJ)/%.tab.c)
 #####################
 ###### Targets ######
 #####################
-all: cleand $(APPNAME) run
+all: cleand $(APPNAME)
 
 # Build Application
 $(APPNAME) : $(LEX_FILES) $(YACC_FILES)

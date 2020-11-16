@@ -22,4 +22,7 @@ _init begin
     }
 
     while(a>b){}
+
+    in v1 192939;
+    out v2 out v3;
 end

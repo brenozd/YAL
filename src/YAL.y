@@ -68,6 +68,13 @@ statements:
           | T_EOL
           ;
 
+commands:
+            if_stm
+          | while_stm
+          | in_stm
+          | out_stm
+          ;
+
 declare: 
           T_ID T_EOS
           | T_ID T_ASSGN expressions T_EOS
@@ -95,10 +102,7 @@ expressions:
           | type
           ;
 
-commands:
-            if_stm
-          | while_stm
-          ;
+
 
 if_stm:
           T_IF T_RP expressions T_LP block else_stm
@@ -111,6 +115,17 @@ else_stm:
 
 while_stm:
           T_WHILE T_RP expressions T_LP block
+          ;
+
+in_stm:
+          T_IN T_ID type T_EOS
+          ;
+
+out_stm:
+            T_OUT T_ID
+          | T_OUT T_ID T_EOS
+          | T_OUT type
+          | T_OUT type T_EOS
           ;
 
 type:

@@ -1,9 +1,11 @@
 %option noyywrap
 %option caseless
+%x C_COMMENT
 
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 # include "YAL.tab.h"
 %}
@@ -27,20 +29,28 @@ quote "'"
 "_init"                                                 { return T_INIT;            } 
 "{"|"begin"                                             { return T_BLOCK_B;         }
 "}"|"end"                                               { return T_BLOCK_E;         }
-"#".*                                                   { /* ignore comments */     }
+
+"<!"            { BEGIN(C_COMMENT); }
+<C_COMMENT>"!>" { BEGIN(INITIAL); }
+<C_COMMENT>\n   { }
+<C_COMMENT>.    { }
 
     /*Types*/
-{digit}+                                            { yylval = atoi(yytext); 
+{digit}+                                                { yylval.int_val = atoi(yytext); 
                                                           return T_INTEGER;         }
-{digit}*"."{digit}+                                 { yylval = atoi(yytext);
+{digit}*"."{digit}+                                     { yylval.float_val = atoi(yytext);
                                                           return T_FLOAT;           }
-{quote}{alpha}{quote}                                   { return T_CHAR;            }
-{quote}({alpha}|{special}){2,}{quote}                   { return T_STRING;          }
-[("true")|("false")]                                    { return T_BOOLEAN;         }
+{quote}({alpha}|{digit}|{special}){quote}               { yylval.str_val = strdup(yytext); 
+                                                          return T_CHAR;            }
+{quote}({alpha}|{digit}|{special}){2,}{quote}           { yylval.str_val = strdup(yytext);
+                                                          return T_STRING;          }
+[("true")|("false")]                                    { yylval.int_val = atoi(yytext);
+                                                          return T_BOOLEAN;         }
 
     /*IO*/
 "in"|"<<"                                               { return T_IN;              }
 "out"|">>"                                              { return T_OUT;             }
+"outl"|"\\>>"                                            { return T_OUTL;             }
 
     /*Relational*/
 "="                                                     { return T_ASSGN;           }
@@ -52,18 +62,16 @@ quote "'"
 "<="                                                    { return T_LE;              }
 
     /*Arithmetic*/
-"+"                                                     { return T_SUM;             }
+"+"                                                     { return T_SUM;             }    
 "-"                                                     { return T_SUB;             }
 "*"                                                     { return T_MULT;            }
 "/"                                                     { return T_DIV;             }
-"^"                                                     { return T_POW;             }
 "%"                                                     { return T_MOD;             }
 
     /*Logical*/
 "and"|"&&"                                              { return T_AND;             }
 "or"|"||"                                               { return T_OR;              }
 "not"|"!"                                               { return T_NOT;             }
-"xor"                                                   { return T_XOR;             }
 
     /*Structures*/
 "while"                                                 { return T_WHILE;           }
@@ -71,7 +79,8 @@ quote "'"
 "else"                                                  { return T_ELSE;            }
 
     /*Declaration*/
-({alpha}|{special}|{digit})({alpha}|{digit})*           { return T_ID;              }
+({alpha}|{special}|{digit})({alpha}|{digit})*           { yylval.idIndex = *yytext - 'a';
+                                                          return T_ID;              }
 
     /*Anything*/
 .                                                       { return *yytext;           }

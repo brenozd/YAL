@@ -4,7 +4,7 @@
 LEX = flex
 LEX_FLAGS = -o
 YACC = bison
-YACC_FLAGS = -dtvk -o
+YACC_FLAGS = -dtvy -o
 
 CXX = gcc
 CXX_FLAGS = -g -DYYDEBUG=1
@@ -41,7 +41,6 @@ $(APPNAME) : $(LEX_FILES) $(YACC_FILES)
 #Run executable
 .PHONY: run
 run:
-	clear
 	@echo "🚀 Running..."
 	./$(BIN)/$(APPNAME).out $(ARGS)
 

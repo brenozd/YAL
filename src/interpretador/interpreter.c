@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "nodes.h"
-#include "../obj/YAL.tab.h"
+#include "../../obj/YAL.tab.h"
 
 #define sizeof_Node (((char *)&node->cnt - (char *)node))
 
@@ -137,7 +137,23 @@ int execNode(nodeType *node)
             return 0;
 
         case T_IN:
-            return execNode(node->stmt.op[1]);
+        {
+            int v = 0;
+            scanf("%d", v);
+            char *name = strdup(node->stmt.op[0]);
+            idNode *n = getsym(name);
+            if (n != NULL)
+            {
+                n->value = execNode(node->stmt.op[1]);
+                return 1;
+            }
+            else
+            {
+                printf("Variable %s does not exist", name);
+                exit(0);
+            }
+        }
+            
 
         case T_OUT:
             printf("%d", execNode(node->stmt.op[0]));
@@ -145,9 +161,9 @@ int execNode(nodeType *node)
 
         case T_OUTL:
         {
-            int val = execNode(node->stmt.op[0]);
-            printf("%d\n", val);
-            return 0;
+                int val = execNode(node->stmt.op[0]);
+                printf("%d\n", val);
+                return 0;
         }
 
         case T_SUM:

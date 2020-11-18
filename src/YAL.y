@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "../src/nodes.h"
-#include "../src/interpreter.c"
+#include "../src/interpretador/nodes.h"
+#include "../src/interpretador/interpreter.c"
 
 #define DEBUG 0
 
@@ -75,7 +75,7 @@ program:
           ;
 
 block: 
-            block statement_list { execNode($2); freeNode($2); }
+            block statement_list { execNode($2); }
           | /* NULL */
           ;
 
@@ -172,8 +172,8 @@ while_stm:
           ;
 
 in_stm:
-          T_IN T_ID type T_EOS  { fprintf(yycmd, "ASSIGNED VALUE %d TO VARIABLE %s WITH OPERATOR IN\n", $3, $2);
-                                  $$ = stmt(T_IN, 2, $2, $3);}
+          T_IN T_ID T_EOS  { fprintf(yycmd, "ASSIGNED VALUE TO VARIABLE %s WITH OPERATOR IN\n", $2);
+                                  $$ = stmt(T_IN, 1, $2);}
           ;
 
 out_stm:
@@ -207,15 +207,12 @@ void main(int argc, char **argv)
 	yytokens = fopen(argv[2], "w+");
   yycmd = fopen(argv[3], "w+");
 
-  if(!yyparse())
+  if(yyparse())
   {
-		printf("\nParsing complete\n");
-  }
-	else
-	{
 		printf("\nParsing failed\n");
 		exit(0);
 	}
+  
 	fclose(yyin);
   fclose(yytokens);
   fclose(yycmd);

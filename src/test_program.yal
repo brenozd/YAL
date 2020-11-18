@@ -1,4 +1,0 @@
-_init {
-    varA = 10;
-    outl varA;
-}

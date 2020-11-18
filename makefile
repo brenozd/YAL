@@ -7,7 +7,7 @@ YACC = bison
 YACC_FLAGS = -dtvy -o
 
 CXX = gcc
-CXX_FLAGS = -g -DYYDEBUG=1
+CXX_FLAGS = -DYYDEBUG=1
 LD_FLAGS = 
 
 APPNAME = YAL

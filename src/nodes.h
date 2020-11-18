@@ -2,36 +2,44 @@
 #define NODES_H
 
 extern int sym[26];
+struct idNode *id_table = NULL;
 
-typedef enum {
-    Constant,
-    Id,
-    Statement
+typedef enum
+{
+    t_Constant,
+    t_Id,
+    t_Statement,
+    t_Block
 } nodeEnum;
 
-typedef struct {
+typedef struct constNode
+{
     int value;
 } constNode;
 
-typedef struct {
+typedef struct idNode
+{
+    char *name;
     int value;
+    struct idNode *next;
 } idNode;
 
-typedef struct {
+typedef struct stmtNode
+{
     int opr;
     int num_operators;
-    struct nodeTag *op[1];
+    struct nodeType *op[3];
 } stmtNode;
 
-typedef struct nodeTag {
+typedef struct nodeTypeTag
+{
     nodeEnum type;
-
     union
     {
         constNode cnt;
         idNode id;
         stmtNode stmt;
     };
-    
+
 } nodeType;
 #endif

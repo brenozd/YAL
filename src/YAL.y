@@ -1,5 +1,4 @@
 %{
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -11,26 +10,21 @@
 extern int yylex();
 extern int yyparse();
 extern FILE* yyin;
-extern FILE* yyout;
+FILE* yytokens;
+FILE* yycmd;
 int sym[26]; 
+extern struct idNode *id_table;
 
 /* Prototypes */
 void yyerror(const char* s);
-
-nodeType *stmt(int oper, int nops, ...);
-nodeType *id(int i);
-nodeType *constant(int value);
-
-void freeNode(nodeType *p);
-int ex(nodeType *p);
 %}
 
 %union {
     char* str_val;
-    int int_val;
+    int   int_val;
     float float_val;
 
-    int idIndex;
+    char* id_name;
     struct nodeType *nPtr;            
 };
 
@@ -43,18 +37,17 @@ int ex(nodeType *p);
 
 //Blocks
 %token T_INIT
-%token T_BLOCK_B
-%token T_BLOCK_E
 
 //Types
-%token <idIndex> T_ID
+%token <id_name> T_ID
+%left T_LET
 %right T_ASSGN
 %token <int_val> T_INTEGER T_BOOLEAN
 %token <float_val> T_FLOAT 
 %token <str_val> T_CHAR T_STRING 
 
 //IO
-%left T_IN T_OUT T_OUTL
+%right T_IN T_OUT T_OUTL
 
 //Relational
 %left T_EQUAL T_DIF T_GREAT T_LESS T_GE T_LE
@@ -72,85 +65,125 @@ int ex(nodeType *p);
 //Structures
 %nonassoc T_WHILE T_IF T_ELSE
 
-%type <nPtr> statements statement_list expressions commands block out_stm outl_stm while_stm if_stm else_stm type declare
+%type <nPtr> statements statement_list expressions commands block 
+%type <nPtr> out_stm outl_stm in_stm while_stm if_stm else_stm 
+%type <nPtr> type declare arithmetic relational logical
 %%
 
 program: 
-          T_INIT block { exit(0); }
+          T_INIT  block  
           ;
 
 block: 
-            T_BLOCK_B statement_list T_BLOCK_E { execNode($2);}
+            block statement_list { execNode($2); freeNode($2); }
+          | /* NULL */
           ;
 
-statement_list: 
+statement_list:
             statement_list statements  { $$ = stmt(T_EOS, 2, $1, $2); }
           | statements                 { $$ = $1; }
+          
           ;
 
 statements:  
-            declare
-          | expressions
-          | commands
-          | T_EOS                      { $$ = stmt(T_EOS, 2, NULL, NULL); }
+            declare                   { $$ = $1; }
+          | expressions               { $$ = $1; }
+          | commands                  { $$ = $1; }
           ;
 
 commands:
-            if_stm
+            if_stm              
           | while_stm
-          | in_stm
-          | out_stm
-          | outl_stm
+          | in_stm                    { $$ = $1;}
+          | out_stm                   { $$ = $1;}
+          | outl_stm                  { $$ = $1;}
           ;
 
 declare: 
-            T_ID T_EOS                              { $$ = stmt(T_ASSGN, 1, id($1)); }
-          | T_ID T_ASSGN expressions T_EOS          { $$ = stmt(T_ASSGN, 3, id($1), $3); }
+            T_LET T_ID T_ASSGN expressions T_EOS    { fprintf(yycmd, "CREATE %s AND ASSIGN VALUE %d\n", $2, $4); 
+                                                      $$ = stmt(T_ASSGN, 2, $2, $4); }
+          | T_ID T_ASSGN expressions T_EOS          { fprintf(yycmd, "ASSIGN TO %s VALUE %d\n", $1, $3); 
+                                                      $$ = stmt(T_ASSGN, 2, $1, $3);}
           ;
 
 expressions:
-            expressions T_EQUAL expressions         { $$ = stmt(T_EQUAL, 2, $1,  $3);}
-          | expressions T_DIF expressions           { $$ = stmt(T_DIF, 2, $1,  $3);}
-          | expressions T_GREAT expressions         { $$ = stmt(T_GREAT, 2, $1,  $3);}
-          | expressions T_LESS expressions          { $$ = stmt(T_LESS, 2, $1,  $3);}
-          | expressions T_GE expressions            { $$ = stmt(T_GE, 2, $1,  $3);}
-          | expressions T_LE expressions            { $$ = stmt(T_LE, 2, $1,  $3);}
-          | expressions T_SUM expressions           { $$ = stmt(T_SUM, 2, $1,  $3);}
-          | expressions T_SUB expressions           { $$ = stmt(T_SUB, 2, $1,  $3);}
-          | expressions T_MULT expressions          { $$ = stmt(T_MULT, 2, $1,  $3);}
-          | expressions T_DIV expressions           { $$ = stmt(T_DIV, 2, $1,  $3);}
-          | expressions T_MOD expressions           { $$ = stmt(T_MOD, 2, $1,  $3);}
-          | expressions T_AND expressions           { $$ = stmt(T_AND, 2, $1,  $3);}
-          | expressions T_OR expressions            { $$ = stmt(T_OR, 2, $1,  $3);}
-          | expressions T_NOT expressions           { $$ = stmt(T_NOT, 2, $1, $3);}
-          | T_SUB expressions                       { $$ = stmt(T_NEGATIVE, 1, $2);}
-          | T_RP expressions T_LP                   { $$ = $2;                     }
-          | type                                                             
+            type                                                
+          | arithmetic                                          
+          | relational                                          
+          | logical                                             
+          | expressions type                                    
+          | expressions arithmetic                              
+          | expressions relational                              
+          | expressions logical                                
           ;
 
+arithmetic:
+            expressions T_SUM expressions           { fprintf(yycmd, "SUMMING %d AND %d\n", $1, $3);
+                                                      $$ = stmt(T_SUM, 2, $1,  $3);}
+          | expressions T_SUB expressions           { fprintf(yycmd, "SUBTRACTING %d AND %d\n", $1, $3);
+                                                      $$ = stmt(T_SUB, 2, $1,  $3);}
+          | expressions T_MULT expressions          { fprintf(yycmd, "MULTIPLYING %d AND %d\n", $1, $3);
+                                                      $$ = stmt(T_MULT, 2, $1,  $3);}
+          | expressions T_DIV expressions           { fprintf(yycmd, "DIVIDING %d AND %d\n", $1, $3);
+                                                      $$ = stmt(T_DIV, 2, $1,  $3);}
+          | expressions T_MOD expressions           { fprintf(yycmd, "MOD %d FROM %d\n", $1, $3);
+                                                      $$ = stmt(T_MOD, 2, $1,  $3);}
+          | T_SUB expressions                       { fprintf(yycmd, "NEGATIVE NUMBER %d\n", $2);
+                                                      $$ = stmt(T_NEGATIVE, 1, $2);}
+          | T_RP expressions T_LP                   { $$ = $2;                     }                                                            
+          ;
+
+relational:
+            expressions T_EQUAL expressions         { fprintf(yycmd, "COMPARING %d == %d\n", $1, $3);
+                                                      $$ = stmt(T_EQUAL, 2, $1,  $3);}
+          | expressions T_DIF expressions           { fprintf(yycmd, "COMPARING %d != %d\n", $1, $3);
+                                                      $$ = stmt(T_DIF, 2, $1,  $3);}
+          | expressions T_GREAT expressions         { fprintf(yycmd, "COMPARING %d > %d\n", $1, $3);
+                                                      $$ = stmt(T_GREAT, 2, $1,  $3);}
+          | expressions T_LESS expressions          { fprintf(yycmd, "COMPARING %d < %d\n", $1, $3);
+                                                      $$ = stmt(T_LESS, 2, $1,  $3);}
+          | expressions T_GE expressions            { fprintf(yycmd, "COMPARING %d >= %d\n", $1, $3);
+                                                      $$ = stmt(T_GE, 2, $1,  $3);}
+          | expressions T_LE expressions            { fprintf(yycmd, "COMPARING %d <= %d\n", $1, $3);
+                                                      $$ = stmt(T_LE, 2, $1,  $3);}
+          ;
+
+logical:
+            expressions T_AND expressions           { fprintf(yycmd, "LOGICAL AND BETWEEN %d, %d\n", $1, $3);
+                                                      $$ = stmt(T_AND, 2, $1,  $3);}
+          | expressions T_OR expressions            { fprintf(yycmd, "LOGICAL OR BETWEEN %d, %d\n", $1, $3);
+                                                      $$ = stmt(T_OR, 2, $1,  $3);}
+          | expressions T_NOT expressions           { fprintf(yycmd, "LOGICAL NOT %d\n", $1, $3);
+                                                      $$ = stmt(T_NOT, 2, $1, $3);}
+
 if_stm:
-          T_IF T_RP expressions T_LP block else_stm { $$ = stmt(T_IF, 2, $3, $5); }
+          T_IF T_RP relational T_LP  block else_stm { fprintf(yycmd, "IF STATEMENT\n");
+                                                      $$ = stmt(T_IF, 2, $3, $5); }
           ;
 
 else_stm:
-          T_ELSE block
-          | /* empty */
+          T_ELSE  block                              { fprintf(yycmd, "ELSE STATEMENT\n"); }
+          | /* NULL */
           ;
 
 while_stm:
-          T_WHILE T_RP expressions T_LP block { $$ = stmt(T_WHILE, 2, $3, $5); }
+          T_WHILE T_RP relational T_LP  block     { fprintf(yycmd, "WHILE STATEMENT \n");
+                                                  $$ = stmt(T_WHILE, 2, $3, $5); }
           ;
 
 in_stm:
-          T_IN T_ID type T_EOS
+          T_IN T_ID type T_EOS  { fprintf(yycmd, "ASSIGNED VALUE %d TO VARIABLE %s WITH OPERATOR IN\n", $3, $2);
+                                  $$ = stmt(T_IN, 2, $2, $3);}
           ;
 
 out_stm:
-            T_OUT expressions T_EOS { $$ = stmt(T_OUT, 1, $2); }                     
+            T_OUT expressions T_EOS { fprintf(yycmd, "PRINTED VALUE %d\n", $2);
+                                      $$ = stmt(T_OUT, 1, $2); }                     
           ;
 
 outl_stm:
-            T_OUTL expressions T_EOS { $$ = stmt(T_OUTL, 1, $2); }                     
+            T_OUTL expressions T_EOS { fprintf(yycmd, "PRINTED VALUE WITH NEW LINE %d\n ", $2);
+                                       $$ = stmt(T_OUTL, 1, $2); }                     
           ;
 
 type:
@@ -163,72 +196,6 @@ type:
           ;
 %%
 
-/* Interpreter Code */
-
-#define sizeof_Node (((char *)&node->cnt - (char *)node))
-
-nodeType* constant(int value)
-{
-  nodeType *node;
-  size_t nodeSize;
-
-  nodeSize = sizeof_Node + sizeof(constNode);
-  if((node=malloc(nodeSize)) == NULL)
-    yyerror("Out of memory");
-  node->type = Constant;
-  node->id.value = value;
-  return node;
-}
-
-nodeType* id(int value)
-{
-  nodeType *node;
-  size_t nodeSize;
-
-  nodeSize = sizeof_Node + sizeof(idNode);
-  if((node=malloc(nodeSize)) == NULL)
-    yyerror("Out of memory");
-  node->type = Id;
-  node->id.value = value;
-  return node;
-}
-
-nodeType* stmt(int opr, int num_operators, ...)
-{
-  va_list args;
-  nodeType *node;
-  size_t nodeSize;
-
-  nodeSize = sizeof_Node + sizeof(stmtNode) + (num_operators-1)*(sizeof(nodeType*));
-  if((node=malloc(nodeSize)) == NULL)
-    yyerror("Out of memory");
-
-  node->type = Statement;
-  node->stmt.opr = opr;
-  node->stmt.num_operators = num_operators;
-  va_start(args, num_operators);
-  for (size_t i = 0; i < num_operators; i++){
-    node->stmt.op[i] = va_arg(args, nodeType*);
-  }
-  va_end(args);
-  return node;
-}
-
-void freeNode(nodeType *node)
-{
-  if (!node)  
-    return;
-
-  if(node->type == Statement)
-  {
-    for (size_t i = 0; i < node->stmt.num_operators; i++)
-    {
-      freeNode(node->stmt.op[i]);
-    }
-  }
-  free(node);
-}
-
 /* Main And YACC */
 void main(int argc, char **argv)
 {
@@ -237,7 +204,8 @@ void main(int argc, char **argv)
   #endif
 
   yyin = fopen(argv[1], "r");
-	yyout = fopen(argv[2], "w+");
+	yytokens = fopen(argv[2], "w+");
+  yycmd = fopen(argv[3], "w+");
 
   if(!yyparse())
   {
@@ -249,10 +217,13 @@ void main(int argc, char **argv)
 		exit(0);
 	}
 	fclose(yyin);
-  fclose(yyout);
+  fclose(yytokens);
+  fclose(yycmd);
+  
 }
 
 void yyerror(const char *s)
 {
   fprintf(stderr, "ERROR: %s\n", s);
+  exit(-1);
 }

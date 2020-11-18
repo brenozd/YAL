@@ -1,0 +1,4 @@
+_init {
+    let variavelA = 10;
+    outl variavelA;
+}

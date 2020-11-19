@@ -1,10 +1,12 @@
-_init {
+_init begin
     let variavelA = 10;
     let variavelB = 2;
 
-    outl variavelA + variavelB;
     outl variavelA - variavelB;
+    outl variavelA + variavelB;
     outl variavelA * variavelB;
     outl variavelA / variavelB;
-    outl variavelA % variavelB;
-}
+
+    variavelA = -2;
+    outl variavelA;
+end

@@ -1,78 +1,107 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
 #include <math.h>
 #include "nodes.h"
 #include "../../obj/YAL.tab.h"
 
-#define sizeof_Node (((char *)&node->cnt - (char *)node))
+#define sizeof_Node ((char *)&_node->cnt - (char *)_node)
 
-nodeType *getsym(char const *name)
+//Pointer to a chain-structure (symbol table)
+node *id_table = NULL;
+
+extern FILE *yycmd;
+
+//Get a specific symbol from id_table
+node *getSym(char const *name)
+{
+    node *_node = NULL;
+    for (node *p = id_table; p; p = p->id.next)
+        if (strcmp(p->id.name, name) == 0)
+            _node = p;
+    return _node;
+}
+
+//Check and list every variable in id_table
+void checkSymbols()
 {
     for (idNode *p = id_table; p; p = p->next)
-        if (strcmp(p->name, name) == 0)
-            return p;
-    return NULL;
+    {
+        printf("[%s, %d]\n", p->name, p->value);
+    }
 }
 
-nodeType *constant(int value)
+//Create a constant node to store value
+node *constant(int value)
 {
-    nodeType *node;
+    node *_node = NULL;
     size_t nodeSize;
-
     nodeSize = sizeof_Node + sizeof(constNode);
-    if ((node = malloc(nodeSize)) == NULL)
+    if ((_node = malloc(nodeSize)) == NULL)
         yyerror("Out of memory");
-    node->type = t_Constant;
-    node->cnt.value = value;
-    return node;
+    _node->type = t_Constant;
+    _node->cnt.value = value;
+    fprintf(yycmd, "creating constant %d\n", _node->cnt.value);
+    return _node;
 }
 
-nodeType *id(char const *name)
+//Create a id node to store a variable type
+node *id(char const *name)
 {
     char *_name = strdup(name);
-    nodeType *node = getsym(_name);
-    if (node == NULL)
+    node *_node = getSym(_name);
+    if (_node == NULL)
     {
+        fprintf(yycmd, "creating variable %s\n", _name);
         size_t nodeSize;
         nodeSize = sizeof_Node + sizeof(idNode);
-        if ((node = malloc(nodeSize)) == NULL)
+        if ((_node = malloc(nodeSize)) == NULL)
             yyerror("Out of memory");
-        node->type = t_Id;
-        node->id.name = _name;
-        node->id.next = id_table;
-        id_table = &node->id;
+        _node->type = t_Id;
+        _node->id.name = _name;
+        _node->id.value = 0;
+        _node->id.next = id_table;
+        id_table = _node;
     }
-    return node;
+    else
+    {
+        printf("Variable %s already exists with value %d\n", _node->id.name, _node->id.value);
+    }
+
+    return _node;
 }
 
-nodeType *stmt(int opr, int num_operators, ...)
+//Create a statement node
+node *stmt(int opr, int num_operators, ...)
 {
     va_list args;
-    nodeType *node;
+    node *_node = NULL;
     size_t nodeSize;
-    nodeSize = sizeof_Node + sizeof(stmtNode) + (num_operators - 1) * (sizeof(nodeType *));
-    if ((node = malloc(nodeSize)) == NULL)
+    nodeSize = sizeof_Node + sizeof(stmtNode) + (num_operators - 1) * (sizeof(node *));
+    if ((_node = malloc(nodeSize)) == NULL)
         yyerror("Out of memory");
 
-    node->type = t_Statement;
-    node->stmt.opr = opr;
-    node->stmt.num_operators = num_operators;
+    _node->type = t_Statement;
+    _node->stmt.opr = opr;
+    _node->stmt.num_operators = num_operators;
     va_start(args, num_operators);
     for (size_t i = 0; i < num_operators; i++)
     {
-        node->stmt.op[i] = va_arg(args, nodeType *);
+        _node->stmt.op[i] = va_arg(args, node*);
     }
     va_end(args);
-    return node;
+    return _node;
 }
 
-void freeNode(nodeType *node)
+//Free nodes and sub-nodes
+void freeNode(node *node)
 {
     if (!node)
         return;
 
     if (node->type == t_Statement)
     {
-        for (size_t i = 0; i < node->stmt.num_operators; i++)
+        for (unsigned int i = 0; i < node->stmt.num_operators; i++)
         {
             freeNode(node->stmt.op[i]);
         }
@@ -80,71 +109,81 @@ void freeNode(nodeType *node)
     free(node);
 }
 
-int execNode(nodeType *node)
+//Execute node based on node type and flag
+int execNode(node *_node)
 {
 
-    if (!node)
-        return -1;
+    if (!_node)
+        return 0;
 
-    switch (node->type)
+    switch (_node->type)
     {
+
     case t_Constant:
-        return node->cnt.value;
+        return _node->cnt.value;
         break;
 
     case t_Id:
     {
-        nodeType *n = getsym(node->id.name);
-        return n != NULL ? n->cnt.value : -4;
+        node *n = getSym(_node->id.name);
+        return n != NULL ? n->id.value : -4;
         break;
     }
 
-    case t_Block:
-        break;
-
     case t_Statement:
-        switch (node->stmt.opr)
+        switch (_node->stmt.opr)
         {
+            /*----------------------
+            |      Variables
+            -----------------------*/
         case T_ASSGN:
         {
-            char *name = strdup(node->stmt.op[0]);
-            idNode *n = getsym(name);
+            char *name = strdup(_node->stmt.op[0]);
+            node *n = getSym(name);
             if (n != NULL)
             {
-                n->value = execNode(node->stmt.op[1]);
-                return 1;
+                int v = execNode(_node->stmt.op[1]);
+                fprintf(yycmd, "assigned value %d to %s\n", v, n->id.name);
+                return n->id.value = v;
             }
             else
             {
-                printf("Variable %s does not exist", name);
+                printf("Variable %s does not exist\n", name);
+                exit(0);
             }
         }
 
+            /*----------------------
+            |  Loops, cond and EOS
+            -----------------------*/
         case T_EOS:
-            execNode(node->stmt.op[0]);
-            return execNode(node->stmt.op[1]);
+            execNode(_node->stmt.op[0]);
+            return execNode(_node->stmt.op[1]);
 
         case T_WHILE:
-            while (execNode(node->stmt.op[0]))
-                execNode(node->stmt.op[1]);
+            while (execNode(_node->stmt.op[0]))
+                execNode(_node->stmt.op[1]);
             return 0;
 
         case T_IF:
-            if (node->stmt.op[0])
-                execNode(node->stmt.op[1]);
-            else if (node->stmt.num_operators > 2)
-                execNode(node->stmt.op[2]);
+            if (_node->stmt.op[0])
+                execNode(_node->stmt.op[1]);
+            else if (_node->stmt.num_operators > 2)
+                execNode(_node->stmt.op[2]);
             return 0;
 
+            /*----------------------
+            |          IO
+            -----------------------*/
         case T_IN:
         {
             int v = 0;
             scanf("%d", v);
-            char *name = strdup(node->stmt.op[0]);
-            idNode *n = getsym(name);
+            char *name = strdup(_node->stmt.op[0]);
+            node *n = getSym(name);
             if (n != NULL)
             {
-                n->value = execNode(node->stmt.op[1]);
+                n->id.value = execNode(_node->stmt.op[1]);
                 return 1;
             }
             else
@@ -153,63 +192,87 @@ int execNode(nodeType *node)
                 exit(0);
             }
         }
-            
 
         case T_OUT:
-            printf("%d", execNode(node->stmt.op[0]));
+            printf("%d", execNode(_node->stmt.op[0]));
             return 0;
 
         case T_OUTL:
+            printf("%d\n", execNode(_node->stmt.op[0]));
+            return 0;
+
+            /*----------------------
+            |      Arithmetic
+            -----------------------*/
+        case T_SUM:
         {
-                int val = execNode(node->stmt.op[0]);
-                printf("%d\n", val);
-                return 0;
+            int n1 = execNode(_node->stmt.op[0]);
+            int n2 = execNode(_node->stmt.op[1]);
+            fprintf(yycmd, "summed %d and %d\n", n1, n2);
+            return n1 + n2;
         }
 
-        case T_SUM:
-            return execNode(node->stmt.op[0]) + execNode(node->stmt.op[1]);
-
         case T_NEGATIVE:
-            return 0 - execNode(node->stmt.op[0]);
+            return 0 - execNode(_node->stmt.op[0]);
 
         case T_SUB:
-            return execNode(node->stmt.op[0]) - execNode(node->stmt.op[1]);
-
+        {
+            int n1 = execNode(_node->stmt.op[0]);
+            int n2 = execNode(_node->stmt.op[1]);
+            fprintf(yycmd, "subtracted %d and %d\n", n1, n2);
+            return n1 - n2;
+        }
         case T_MULT:
-            return execNode(node->stmt.op[0]) * execNode(node->stmt.op[1]);
+        {
+            int n1 = execNode(_node->stmt.op[0]);
+            int n2 = execNode(_node->stmt.op[1]);
+            fprintf(yycmd, "multiplied %d and %d\n", n1, n2);
+            return n1 * n2;
+        }
 
         case T_DIV:
-            return execNode(node->stmt.op[0]) / execNode(node->stmt.op[1]);
+        {
+            int n1 = execNode(_node->stmt.op[0]);
+            int n2 = execNode(_node->stmt.op[1]);
+            fprintf(yycmd, "divided %d and %d\n", n1, n2);
+            return n1 / n2;
+        }
 
         case T_MOD:
-            return execNode(node->stmt.op[0]) % execNode(node->stmt.op[1]);
+            return execNode(_node->stmt.op[0]) % execNode(_node->stmt.op[1]);
 
+            /*----------------------
+            |      Relational
+            -----------------------*/
         case T_GREAT:
-            return execNode(node->stmt.op[0]) > execNode(node->stmt.op[1]);
+            return execNode(_node->stmt.op[0]) > execNode(_node->stmt.op[1]);
 
         case T_GE:
-            return execNode(node->stmt.op[0]) >= execNode(node->stmt.op[1]);
+            return execNode(_node->stmt.op[0]) >= execNode(_node->stmt.op[1]);
 
         case T_LESS:
-            return execNode(node->stmt.op[0]) < execNode(node->stmt.op[1]);
+            return execNode(_node->stmt.op[0]) < execNode(_node->stmt.op[1]);
 
         case T_LE:
-            return execNode(node->stmt.op[0]) <= execNode(node->stmt.op[1]);
+            return execNode(_node->stmt.op[0]) <= execNode(_node->stmt.op[1]);
 
         case T_EQUAL:
-            return execNode(node->stmt.op[0]) == execNode(node->stmt.op[1]);
+            return execNode(_node->stmt.op[0]) == execNode(_node->stmt.op[1]);
 
         case T_DIF:
-            return execNode(node->stmt.op[0]) != execNode(node->stmt.op[1]);
+            return execNode(_node->stmt.op[0]) != execNode(_node->stmt.op[1]);
 
+            /*----------------------
+            |        Logical
+            -----------------------*/
         case T_AND:
-            return execNode(node->stmt.op[0]) && execNode(node->stmt.op[1]);
+            return execNode(_node->stmt.op[0]) && execNode(_node->stmt.op[1]);
 
         case T_OR:
-            return execNode(node->stmt.op[0]) || execNode(node->stmt.op[1]);
+            return execNode(_node->stmt.op[0]) || execNode(_node->stmt.op[1]);
 
         case T_NOT:
-            return !(execNode(node->stmt.op[0]));
+            return !(execNode(_node->stmt.op[0]));
 
         default:
             return -3;

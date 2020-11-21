@@ -1,0 +1,6 @@
+_init {
+    let vA = 5;
+    outl vA;
+    vA -= 5;
+    outl vA;
+}

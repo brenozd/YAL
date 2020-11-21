@@ -1,10 +1,12 @@
 _init {
     let variavelA = 0;
-    let resultado = 0;
-    
+    let resultado = 1;
+
+    in variavelA;
+
     while(variavelA > 0){
-        resultado = resultado * variavelA;
-        variavelA = variavelA - 1;
+        resultado *=  variavelA;
+        variavelA -=  1;
     }
     
     outl resultado;

@@ -139,7 +139,7 @@ int execNode(node *_node)
         switch (_node->stmt.opr)
         {
 /*---------------------------------------------------------------------------------
-                                    Variables
+                                Assign and compose
 ---------------------------------------------------------------------------------*/
         case T_ASSGN:
         {
@@ -150,6 +150,74 @@ int execNode(node *_node)
                 int v = execNode(_node->stmt.op[1]);
                 fprintf(yycmd, "assigned value %d to %s\n", v, n->id.name);
                 return n->id.value = v;
+            }
+            else
+            {
+                printf("Variable %s does not exist\n", name);
+                exit(0);
+            }
+        }
+
+        case T_SUME:
+        {
+            char *name = strdup(_node->stmt.op[0]);
+            node *n = getSymbol(name);
+            if (n != NULL)
+            {
+                int v = execNode(_node->stmt.op[1]);
+                fprintf(yycmd, "assigned value %d to %s\n", v, n->id.name);
+                return n->id.value += v;
+            }
+            else
+            {
+                printf("Variable %s does not exist\n", name);
+                exit(0);
+            }
+        }
+
+        case T_SUBE:
+        {
+            char *name = strdup(_node->stmt.op[0]);
+            node *n = getSymbol(name);
+            if (n != NULL)
+            {
+                int v = execNode(_node->stmt.op[1]);
+                fprintf(yycmd, "assigned value %d to %s\n", v, n->id.name);
+                return n->id.value -= v;
+            }
+            else
+            {
+                printf("Variable %s does not exist\n", name);
+                exit(0);
+            }
+        }
+
+        case T_MULTE:
+        {
+            char *name = strdup(_node->stmt.op[0]);
+            node *n = getSymbol(name);
+            if (n != NULL)
+            {
+                int v = execNode(_node->stmt.op[1]);
+                fprintf(yycmd, "assigned value %d to %s\n", v, n->id.name);
+                return n->id.value *= v;
+            }
+            else
+            {
+                printf("Variable %s does not exist\n", name);
+                exit(0);
+            }
+        }
+
+        case T_DIVE:
+        {
+            char *name = strdup(_node->stmt.op[0]);
+            node *n = getSymbol(name);
+            if (n != NULL)
+            {
+                int v = execNode(_node->stmt.op[1]);
+                fprintf(yycmd, "assigned value %d to %s\n", v, n->id.name);
+                return n->id.value /= v;
             }
             else
             {

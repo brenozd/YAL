@@ -4,6 +4,6 @@ _init{
     while(variavelA > 0)
     {
         outl variavelA;
-        variavelA = variavelA - 1;
+        variavelA -= 1;
     }
 }

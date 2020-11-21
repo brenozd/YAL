@@ -92,6 +92,12 @@ quote "'"
 "/"                                                     { fprintf(yytokens, "T_DIV ");      return T_DIV;   }
 "%"                                                     { fprintf(yytokens, "T_MOD ");      return T_MOD;   }
 
+    /* Composite */
+"+="                                                    { fprintf(yytokens, "T_SUME ");     return T_SUME;  }
+"-="                                                    { fprintf(yytokens, "T_SUBE ");     return T_SUBE;  }
+"*="                                                    { fprintf(yytokens, "T_MULTE ");    return T_MULTE; }
+"/="                                                    { fprintf(yytokens, "T_DIVE ");     return T_DIVE;  }
+
     /*Logical*/
 "and"|"&&"                                              { fprintf(yytokens, "T_AND ");      return T_AND;   }
 "or"|"||"                                               { fprintf(yytokens, "T_OR ");       return T_OR;    }

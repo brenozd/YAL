@@ -58,6 +58,9 @@ void yyerror(const char* s);
 %left T_MULT T_DIV
 %right T_MOD
 
+%left T_SUME T_SUBE  
+%left T_MULTE T_DIVE
+
 //Logical
 %left T_AND T_OR T_NOT
 
@@ -66,7 +69,7 @@ void yyerror(const char* s);
 
 %type <nPtr> statements statement_list expressions commands block 
 %type <nPtr> out_stm outl_stm in_stm while_stm if_stm else_stm 
-%type <nPtr> type declare arithmetic relational logical
+%type <nPtr> primitives type declare assign arithmetic relational logical
 %%
 
 program: 
@@ -74,7 +77,7 @@ program:
           ;
 
 entry_point:
-          entry_point statement_list                        { execNode($2); }//freeNode($2);          }
+          entry_point statement_list                  { execNode($2); }//freeNode($2);          }
           | /* NULL */
           ;
 
@@ -90,6 +93,7 @@ statement_list:
 statements:
             block                                     { $$ = $1;                                }
           | declare                                   { $$ = $1;                                }
+          | assign                                    { $$ = $1;                                }
           | commands                                  { $$ = $1;                                }
           ;
 
@@ -103,7 +107,14 @@ commands:
 
 declare: 
             T_LET T_ID T_ASSGN expressions T_EOS      { id($2); $$ = stmt(T_ASSGN, 2, $2, $4);  }
-          | T_ID T_ASSGN expressions T_EOS            { $$ = stmt(T_ASSGN, 2, $1, $3);          }
+            ;
+
+assign:
+            T_ID T_ASSGN expressions T_EOS            { $$ = stmt(T_ASSGN, 2, $1, $3);          }
+          | T_ID T_SUME expressions T_EOS             { $$ = stmt(T_SUME, 2, $1, $3);           }
+          | T_ID T_SUBE expressions T_EOS             { $$ = stmt(T_SUBE, 2, $1, $3);           }
+          | T_ID T_MULTE expressions T_EOS            { $$ = stmt(T_MULTE, 2, $1, $3);          }
+          | T_ID T_DIVE expressions T_EOS             { $$ = stmt(T_DIVE, 2, $1, $3);           }
           ;
 
 expressions:
@@ -122,6 +133,8 @@ arithmetic:
           | T_SUB expressions                         { $$ = stmt(T_NEGATIVE, 1, $2);           }
           | T_RP expressions T_LP                     { $$ = $2;                                }                        
           ;
+
+composite:
 
 relational:
             expressions T_EQUAL expressions           { $$ = stmt(T_EQUAL, 2, $1,  $3);         }
@@ -155,7 +168,7 @@ in_stm:
           ;
 
 out_stm:
-            T_OUT expressions T_EOS                   { $$ = stmt(T_OUT, 1, $2);                }                     
+          T_OUT expressions T_EOS                     { $$ = stmt(T_OUT, 1, $2);                }                     
           ;
 
 outl_stm:
@@ -164,7 +177,11 @@ outl_stm:
 
 type:
             T_ID                                      { $$ = getSymbol($1);                     }
-          | T_INTEGER                                 { $$ = constant($1);                      }
+          | primitives
+          ;
+
+primitives:
+            T_INTEGER                                 { $$ = constant($1);                      }
           | T_FLOAT                                   { $$ = constant($1);                      }
           | T_CHAR                                    { $$ = constant($1);                      }
           | T_STRING                                  { $$ = constant($1);                      }
@@ -182,7 +199,7 @@ void main(int argc, char **argv)
   yyin = fopen(argv[1], "r");
 	yytokens = fopen(argv[2], "w+");
   yycmd = fopen(argv[3], "w+");
-
+  
   
   if(yyparse())
   {

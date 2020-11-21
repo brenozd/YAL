@@ -1,6 +1,8 @@
 _init{
     let variavelA = 10;
-    while(variavelA > 0){
+
+    while(variavelA > 0)
+    {
         outl variavelA;
         variavelA = variavelA - 1;
     }

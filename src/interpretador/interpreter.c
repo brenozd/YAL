@@ -8,7 +8,7 @@
 
 //Pointer to a chain-structure (symbol table)
 node *id_table = NULL;
-//Pointer to all nodes allocated
+//Pointer to a chain-structure with all nodes allocated
 node *node_list = NULL;
 
 extern FILE *yycmd;
@@ -166,7 +166,7 @@ int execNode(node *_node)
             return execNode(_node->stmt.op[1]);
 
         case T_WHILE:
-            while (execNode(_node->stmt.op[0]))
+            while (execNode(_node->stmt.op[0]) != 0)
                 execNode(_node->stmt.op[1]);
             return 0;
 

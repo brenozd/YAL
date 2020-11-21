@@ -70,20 +70,21 @@ void yyerror(const char* s);
 %%
 
 program: 
-          T_INIT  block  
+          T_INIT  entry_point  
+          ;
+
+entry_point:
+          entry statement_list                        { execNode($2); }//freeNode($2);          }
+          | /* NULL */
           ;
 
 block: 
-          | T_BLOCK_B statement_list T_BLOCK_E        { execNode($2); freeNode($2);             }
-          |  block statement_list                     { execNode($2); freeNode($2);             }
-          | /* empty */
+          T_BLOCK_B statement_list T_BLOCK_E          { $$ = $2;                                }
           ;
 
 statement_list:
             statements                                { $$ = $1;                                }
           | statement_list statements                 { $$ = stmt(T_EOS, 2, $1, $2);            }
-          
-          
           ;
 
 statements:
@@ -135,9 +136,10 @@ logical:
             expressions T_AND expressions             { $$ = stmt(T_AND, 2, $1,  $3);           }
           | expressions T_OR expressions              { $$ = stmt(T_OR, 2, $1,  $3);            }
           | expressions T_NOT expressions             { $$ = stmt(T_NOT, 2, $1, $3);            }
+          ;
 
 if_stm:
-          T_IF T_RP relational T_LP  block else_stm   { $$ = stmt(T_IF, 2, $3, $5);             }
+          T_IF T_RP relational T_LP block else_stm   { id($3); $$ = stmt(T_IF, 2, $3, $5);      }
           ;
 
 else_stm:

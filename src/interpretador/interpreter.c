@@ -183,12 +183,12 @@ int execNode(node *_node)
         case T_IN:
         {
             int v = 0;
-            scanf("%d", v);
+            scanf("%d", &v);
             char *name = strdup(_node->stmt.op[0]);
             node *n = getSymbol(name);
             if (n != NULL)
             {
-                n->id.value = execNode(_node->stmt.op[1]);
+                n->id.value = v;
                 return 1;
             }
             else

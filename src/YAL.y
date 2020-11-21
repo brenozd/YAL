@@ -74,7 +74,7 @@ program:
           ;
 
 entry_point:
-          entry statement_list                        { execNode($2); }//freeNode($2);          }
+          entry_point statement_list                        { execNode($2); }//freeNode($2);          }
           | /* NULL */
           ;
 

@@ -1,14 +1,6 @@
 #ifndef NODES_H
 #define NODES_H
 
-typedef struct _idNode idNode;
-typedef struct _constNode constNode;
-typedef struct _stmtNode stmtNode;
-typedef struct _node node;
-
-extern int sym[26];
-
-
 typedef enum
 {
     t_Constant,
@@ -30,26 +22,27 @@ typedef struct _constNode
 {
     int value;
     data_type type;
-};
+} constNode;
 
 typedef struct _idNode
 {
     int value;
     data_type type;
     char *name;
-    idNode *next;
-};
+    struct _idNode *next;
+} idNode;
 
 typedef struct _stmtNode
 {
     int opr;
     int num_operators;
-    node *op[2];
-};
+    struct _node *op[3];
+} stmtNode;
 
-struct _node
+typedef struct _node
 {
     nodeEnum type;
+    struct _node *next;
     union
     {
         constNode cnt;
@@ -57,7 +50,5 @@ struct _node
         stmtNode stmt;
     };
 
-};
-
-
+} node;
 #endif

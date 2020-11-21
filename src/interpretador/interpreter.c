@@ -1,19 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include <math.h>
 #include "nodes.h"
 #include "../../obj/YAL.tab.h"
 
-#define sizeof_Node ((char *)&_node->cnt - (char *)_node)
+#define sizeof_Node (sizeof(nodeEnum) + sizeof(node*))
 
 //Pointer to a chain-structure (symbol table)
 node *id_table = NULL;
+//Pointer to all nodes allocated
+node *node_list = NULL;
 
 extern FILE *yycmd;
+extern int n_line;
 
 //Get a specific symbol from id_table
-node *getSym(char const *name)
+node *getSymbol(char const *name)
 {
     node *_node = NULL;
     for (node *p = id_table; p; p = p->id.next)
@@ -41,6 +43,9 @@ node *constant(int value)
         yyerror("Out of memory");
     _node->type = t_Constant;
     _node->cnt.value = value;
+    _node->next = node_list;
+    node_list = _node;
+
     fprintf(yycmd, "creating constant %d\n", _node->cnt.value);
     return _node;
 }
@@ -49,10 +54,10 @@ node *constant(int value)
 node *id(char const *name)
 {
     char *_name = strdup(name);
-    node *_node = getSym(_name);
+    node *_node = getSymbol(_name);
     if (_node == NULL)
     {
-        fprintf(yycmd, "creating variable %s\n", _name);
+        
         size_t nodeSize;
         nodeSize = sizeof_Node + sizeof(idNode);
         if ((_node = malloc(nodeSize)) == NULL)
@@ -62,12 +67,16 @@ node *id(char const *name)
         _node->id.value = 0;
         _node->id.next = id_table;
         id_table = _node;
+        _node->next = node_list;
+        node_list = _node;
+
+        fprintf(yycmd, "creating variable %s\n", _name);
     }
     else
     {
-        printf("Variable %s already exists with value %d\n", _node->id.name, _node->id.value);
+        printf("In line: %d, variable %s already exist\n", n_line, name);
+        exit(0);
     }
-
     return _node;
 }
 
@@ -77,36 +86,32 @@ node *stmt(int opr, int num_operators, ...)
     va_list args;
     node *_node = NULL;
     size_t nodeSize;
-    nodeSize = sizeof_Node + sizeof(stmtNode) + (num_operators - 1) * (sizeof(node *));
+    nodeSize = sizeof_Node + sizeof(stmtNode) + (num_operators - 1) * (sizeof(stmtNode *));
     if ((_node = malloc(nodeSize)) == NULL)
         yyerror("Out of memory");
 
     _node->type = t_Statement;
     _node->stmt.opr = opr;
     _node->stmt.num_operators = num_operators;
+    _node->next = node_list;
+    node_list = _node;
     va_start(args, num_operators);
     for (size_t i = 0; i < num_operators; i++)
     {
-        _node->stmt.op[i] = va_arg(args, node*);
+        _node->stmt.op[i] = va_arg(args, node *);
     }
     va_end(args);
+    
+
     return _node;
 }
 
 //Free nodes and sub-nodes
-void freeNode(node *node)
+void freeNode(node *_node)
 {
-    if (!node)
-        return;
-
-    if (node->type == t_Statement)
-    {
-        for (unsigned int i = 0; i < node->stmt.num_operators; i++)
-        {
-            freeNode(node->stmt.op[i]);
-        }
-    }
-    free(node);
+    if(_node->next != NULL)
+        freeNode(_node->next);
+        free(_node);
 }
 
 //Execute node based on node type and flag
@@ -125,21 +130,21 @@ int execNode(node *_node)
 
     case t_Id:
     {
-        node *n = getSym(_node->id.name);
-        return n != NULL ? n->id.value : -4;
+        node *n = getSymbol(_node->id.name);
+        return n != NULL ? n->id.value : yyerror("Variable does not exist");
         break;
     }
 
     case t_Statement:
         switch (_node->stmt.opr)
         {
-            /*----------------------
-            |      Variables
-            -----------------------*/
+/*---------------------------------------------------------------------------------
+                                    Variables
+---------------------------------------------------------------------------------*/
         case T_ASSGN:
         {
             char *name = strdup(_node->stmt.op[0]);
-            node *n = getSym(name);
+            node *n = getSymbol(name);
             if (n != NULL)
             {
                 int v = execNode(_node->stmt.op[1]);
@@ -153,9 +158,9 @@ int execNode(node *_node)
             }
         }
 
-            /*----------------------
-            |  Loops, cond and EOS
-            -----------------------*/
+/*---------------------------------------------------------------------------------
+                            Loops, conditional and EOS
+---------------------------------------------------------------------------------*/
         case T_EOS:
             execNode(_node->stmt.op[0]);
             return execNode(_node->stmt.op[1]);
@@ -172,15 +177,15 @@ int execNode(node *_node)
                 execNode(_node->stmt.op[2]);
             return 0;
 
-            /*----------------------
-            |          IO
-            -----------------------*/
+/*---------------------------------------------------------------------------------
+                                        IO
+---------------------------------------------------------------------------------*/
         case T_IN:
         {
             int v = 0;
             scanf("%d", v);
             char *name = strdup(_node->stmt.op[0]);
-            node *n = getSym(name);
+            node *n = getSymbol(name);
             if (n != NULL)
             {
                 n->id.value = execNode(_node->stmt.op[1]);
@@ -201,9 +206,9 @@ int execNode(node *_node)
             printf("%d\n", execNode(_node->stmt.op[0]));
             return 0;
 
-            /*----------------------
-            |      Arithmetic
-            -----------------------*/
+/*---------------------------------------------------------------------------------
+                                     Arithmetic
+---------------------------------------------------------------------------------*/
         case T_SUM:
         {
             int n1 = execNode(_node->stmt.op[0]);
@@ -241,9 +246,9 @@ int execNode(node *_node)
         case T_MOD:
             return execNode(_node->stmt.op[0]) % execNode(_node->stmt.op[1]);
 
-            /*----------------------
-            |      Relational
-            -----------------------*/
+/*---------------------------------------------------------------------------------
+                                    Relational                                    
+---------------------------------------------------------------------------------*/
         case T_GREAT:
             return execNode(_node->stmt.op[0]) > execNode(_node->stmt.op[1]);
 
@@ -262,9 +267,9 @@ int execNode(node *_node)
         case T_DIF:
             return execNode(_node->stmt.op[0]) != execNode(_node->stmt.op[1]);
 
-            /*----------------------
-            |        Logical
-            -----------------------*/
+/*---------------------------------------------------------------------------------
+                                        Logical
+---------------------------------------------------------------------------------*/
         case T_AND:
             return execNode(_node->stmt.op[0]) && execNode(_node->stmt.op[1]);
 

@@ -22,17 +22,25 @@ quote "'"
 
 %%
     /*Symbols*/
-"'"                                                     { fprintf(yytokens, "T_QUOTE "); return T_QUOTE;}
-";"                                                     { fprintf(yytokens, "T_EOS ");   return T_EOS;  } 
-")"                                                     { fprintf(yytokens, "T_LP ");    return T_LP;   }
-"("                                                     { fprintf(yytokens, "T_RP ");    return T_RP;   }
-"\n"([ \t])*                                            { fprintf(yytokens, "\n");    n_line++;  }    
+"'"                                                     { fprintf(yytokens, "T_QUOTE "); 
+                                                          return T_QUOTE;}
+";"                                                     { fprintf(yytokens, "T_EOS ");
+                                                          return T_EOS;  } 
+")"                                                     { fprintf(yytokens, "T_LP ");
+                                                          return T_LP;   }
+"("                                                     { fprintf(yytokens, "T_RP ");
+                                                          return T_RP;   }
+"\n"([ \t])*                                            { fprintf(yytokens, "\n");   
+                                                          n_line++;  }    
 [ \t]                                                   { /* ignore whitespace */   }
 
     /*Blocks*/
-"_init"                                                 { fprintf(yytokens, "T_INIT ");  return T_INIT; } 
-"{"|"begin"                                             { fprintf(yytokens, "T_BLOCK_B ");              }
-"}"|"end"                                               { fprintf(yytokens, "T_BLOCK_E ");              }
+"_init"                                                 { fprintf(yytokens, "T_INIT ");  
+                                                          return T_INIT; } 
+"{"|"begin"                                             { fprintf(yytokens, "T_BLOCK_B "); 
+                                                          return T_BLOCK_B; }
+"}"|"end"                                               { fprintf(yytokens, "T_BLOCK_E "); 
+                                                          return T_BLOCK_E; }
 
 "<!"            { BEGIN(C_COMMENT); }
 <C_COMMENT>"!>" { BEGIN(INITIAL); }
@@ -40,7 +48,8 @@ quote "'"
 <C_COMMENT>.    { }
 
     /*Types*/
-"let"                                                   { fprintf(yytokens, "T_LET ");return T_LET; }
+"let"                                                   { fprintf(yytokens, "T_LET ");
+                                                          return T_LET; }
 
 {digit}+                                                { fprintf(yytokens, "T_INTEGER "); 
                                                           yylval.int_val = atoi(yytext); 

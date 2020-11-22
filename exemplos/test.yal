@@ -1,6 +1,16 @@
 _init {
-    let vA = 5;
+    let vA = 50;
     outl vA;
-    vA -= 5;
-    outl vA;
+    while(vA > 0)
+    {
+        if(vA % 2 == 0)
+        {
+            outl 0;
+        }
+        else
+        {
+            outl 1;
+        }
+        vA -= 1;
+    }
 }

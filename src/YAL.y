@@ -134,8 +134,6 @@ arithmetic:
           | T_RP expressions T_LP                     { $$ = $2;                                }                        
           ;
 
-composite:
-
 relational:
             expressions T_EQUAL expressions           { $$ = stmt(T_EQUAL, 2, $1,  $3);         }
           | expressions T_DIF expressions             { $$ = stmt(T_DIF, 2, $1,  $3);           }
@@ -152,23 +150,24 @@ logical:
           ;
 
 if_stm:
-          T_IF T_RP relational T_LP block else_stm   { id($3); $$ = stmt(T_IF, 2, $3, $5);      }
+            T_IF T_RP relational T_LP block else_stm  { $$ = stmt(T_IF, 3, $3, $5, $6);         }
           ;
 
 else_stm:
-          T_ELSE  block                              
+            T_ELSE  block                             { $$ = $2;                                }
+          | /* NULL */                              
           ;
 
 while_stm:
-          T_WHILE T_RP relational T_LP  block         { $$ = stmt(T_WHILE, 2, $3, $5);          }
+            T_WHILE T_RP relational T_LP  block       { $$ = stmt(T_WHILE, 2, $3, $5);          }
           ;
 
 in_stm:
-          T_IN T_ID T_EOS                             { $$ = stmt(T_IN, 1, $2);                 }
+            T_IN T_ID T_EOS                           { $$ = stmt(T_IN, 1, $2);                 }
           ;
 
 out_stm:
-          T_OUT expressions T_EOS                     { $$ = stmt(T_OUT, 1, $2);                }                     
+            T_OUT expressions T_EOS                   { $$ = stmt(T_OUT, 1, $2);                }                     
           ;
 
 outl_stm:

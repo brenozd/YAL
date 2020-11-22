@@ -46,7 +46,7 @@ node *constant(int value)
     _node->next = node_list;
     node_list = _node;
 
-    fprintf(yycmd, "creating constant %d\n", _node->cnt.value);
+    fprintf(yycmd, "creating constant %d\n",  _node->cnt.value);
     return _node;
 }
 
@@ -70,11 +70,11 @@ node *id(char const *name)
         _node->next = node_list;
         node_list = _node;
 
-        fprintf(yycmd, "creating variable %s\n", _name);
+        fprintf(yycmd, "creating variable %s\n",  _name);
     }
     else
     {
-        printf("In line: %d, variable %s already exist\n", n_line, name);
+        printf("In line: %d, variable %s already exist\n",  name);
         exit(0);
     }
     return _node;
@@ -148,7 +148,7 @@ int execNode(node *_node)
             if (n != NULL)
             {
                 int v = execNode(_node->stmt.op[1]);
-                fprintf(yycmd, "assigned value %d to %s\n", v, n->id.name);
+                fprintf(yycmd, "assigned value %d to %s\n",  v, n->id.name);
                 return n->id.value = v;
             }
             else
@@ -165,7 +165,7 @@ int execNode(node *_node)
             if (n != NULL)
             {
                 int v = execNode(_node->stmt.op[1]);
-                fprintf(yycmd, "assigned value %d to %s\n", v, n->id.name);
+                fprintf(yycmd, "summed value %d to %s\n", v, n->id.name);
                 return n->id.value += v;
             }
             else
@@ -182,7 +182,7 @@ int execNode(node *_node)
             if (n != NULL)
             {
                 int v = execNode(_node->stmt.op[1]);
-                fprintf(yycmd, "assigned value %d to %s\n", v, n->id.name);
+                fprintf(yycmd, "subtracted value %d from %s\n",  v, n->id.name);
                 return n->id.value -= v;
             }
             else
@@ -199,7 +199,7 @@ int execNode(node *_node)
             if (n != NULL)
             {
                 int v = execNode(_node->stmt.op[1]);
-                fprintf(yycmd, "assigned value %d to %s\n", v, n->id.name);
+                fprintf(yycmd, "multiplied value from %s by %d\n", n->id.name, v);
                 return n->id.value *= v;
             }
             else
@@ -216,7 +216,7 @@ int execNode(node *_node)
             if (n != NULL)
             {
                 int v = execNode(_node->stmt.op[1]);
-                fprintf(yycmd, "assigned value %d to %s\n", v, n->id.name);
+                fprintf(yycmd, "divided value from %s by %d\n", n->id.name, v);
                 return n->id.value /= v;
             }
             else
@@ -239,11 +239,15 @@ int execNode(node *_node)
             return 0;
 
         case T_IF:
-            if (_node->stmt.op[0])
+        {
+            fprintf(yycmd, "if statement with condition ");
+            if (execNode(_node->stmt.op[0]))
                 execNode(_node->stmt.op[1]);
             else if (_node->stmt.num_operators > 2)
                 execNode(_node->stmt.op[2]);
             return 0;
+        }
+            
 
 /*---------------------------------------------------------------------------------
                                         IO
@@ -271,8 +275,13 @@ int execNode(node *_node)
             return 0;
 
         case T_OUTL:
-            printf("%d\n", execNode(_node->stmt.op[0]));
+        {
+            int n1 = execNode(_node->stmt.op[0]);
+            fprintf(yycmd, "printed value %d\n",  n1);
+            printf("%d\n", n1);
             return 0;
+        }
+            
 
 /*---------------------------------------------------------------------------------
                                      Arithmetic
@@ -281,7 +290,7 @@ int execNode(node *_node)
         {
             int n1 = execNode(_node->stmt.op[0]);
             int n2 = execNode(_node->stmt.op[1]);
-            fprintf(yycmd, "summed %d and %d\n", n1, n2);
+            fprintf(yycmd, "summed %d and %d\n",  n1, n2);
             return n1 + n2;
         }
 
@@ -312,28 +321,64 @@ int execNode(node *_node)
         }
 
         case T_MOD:
-            return execNode(_node->stmt.op[0]) % execNode(_node->stmt.op[1]);
+        {
+            int n1 = execNode(_node->stmt.op[0]);
+            int n2 = execNode(_node->stmt.op[1]);
+            fprintf(yycmd, "calculated %d mod %d\n", n1, n2);
+            return n1 % n2;
+        }
 
 /*---------------------------------------------------------------------------------
                                     Relational                                    
 ---------------------------------------------------------------------------------*/
         case T_GREAT:
-            return execNode(_node->stmt.op[0]) > execNode(_node->stmt.op[1]);
+        {
+            int n1 = execNode(_node->stmt.op[0]);
+            int n2 = execNode(_node->stmt.op[1]);
+            fprintf(yycmd, "checked if %d is great than %d\n",  n1, n2);
+            return n1 > n2;
+        }
+            
 
         case T_GE:
-            return execNode(_node->stmt.op[0]) >= execNode(_node->stmt.op[1]);
+        {
+            int n1 = execNode(_node->stmt.op[0]);
+            int n2 = execNode(_node->stmt.op[1]);
+            fprintf(yycmd, "checked if %d is great or equal than %d\n",  n1, n2);
+            return n1 >= n2;
+        }
 
         case T_LESS:
-            return execNode(_node->stmt.op[0]) < execNode(_node->stmt.op[1]);
+        {
+            int n1 = execNode(_node->stmt.op[0]);
+            int n2 = execNode(_node->stmt.op[1]);
+            fprintf(yycmd, "checked if %d is less than %d\n",  n1, n2);
+            return n1 < n2;
+        }
 
         case T_LE:
-            return execNode(_node->stmt.op[0]) <= execNode(_node->stmt.op[1]);
+        {
+            int n1 = execNode(_node->stmt.op[0]);
+            int n2 = execNode(_node->stmt.op[1]);
+            fprintf(yycmd, "checked if %d is less or equal than %d\n",  n1, n2);
+            return n1 <= n2;
+        }
 
         case T_EQUAL:
-            return execNode(_node->stmt.op[0]) == execNode(_node->stmt.op[1]);
+        {
+            int n1 = execNode(_node->stmt.op[0]);
+            int n2 = execNode(_node->stmt.op[1]);
+            fprintf(yycmd, "checked if %d is equal to %d\n",  n1, n2);
+            return n1 == n2;
+        }
 
         case T_DIF:
-            return execNode(_node->stmt.op[0]) != execNode(_node->stmt.op[1]);
+        {
+            int n1 = execNode(_node->stmt.op[0]);
+            int n2 = execNode(_node->stmt.op[1]);
+            fprintf(yycmd, "checked if %d is different from %d\n",  n1, n2);
+            return n1 != n2;
+        }
 
 /*---------------------------------------------------------------------------------
                                         Logical

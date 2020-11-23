@@ -49,7 +49,7 @@ void yyerror(const char* s);
 %right T_ASSGN
 
 //IO
-%right T_IN T_OUT T_OUTL
+%right T_IN T_OUT T_OUTL T_SPRT
 
 //Relational
 %left T_EQUAL T_DIF T_GREAT T_LESS T_GE T_LE
@@ -69,9 +69,11 @@ void yyerror(const char* s);
 //Structures
 %nonassoc T_WHILE T_IF T_ELSE
 
+%type <nPtr> string number declare 
+%type <nPtr> assign arithmetic relational logical
 %type <nPtr> statements statement_list expressions commands block 
 %type <nPtr> out_stm outl_stm in_stm while_stm if_stm else_stm 
-%type <nPtr> primitives type declare assign arithmetic relational logical
+
 %%
 
 program: 
@@ -79,8 +81,8 @@ program:
           ;
 
 entry_point:
-          entry_point statement_list                  { execNode($2); freeNode($2);          }
-          | /* NULL */
+          entry_point statement_list                  { execNode($2); freeNode($2);             }
+          | /* NULL */                                
           ;
 
 block: 
@@ -109,6 +111,7 @@ commands:
 
 declare: 
             T_LET T_ID T_ASSGN expressions T_EOS      { id($2, d_type); $$ = stmt(T_ASSGN, 2, $2, $4);}
+          | T_LET T_ID T_ASSGN string T_EOS           { id($2, d_type); $$ = stmt(T_ASSGN, 2, $2, $4);}
             ;
 
 assign:
@@ -120,7 +123,12 @@ assign:
           ;
 
 expressions:
-            type                                      { $$ = $1;      }                                                                                 
+            number                                    { $$ = $1;                                }
+          | T_ID                                      { node *n = getSymbol($1);                
+                                                        if(n->id.type == d_STRING) 
+                                                          yyerror("2 - String values cannot be used in expressions");
+                                                        $$ = n;                                 }
+          | string                                    { yyerror("String values cannot be used in expressions"); }  
           | arithmetic                                         
           | relational                               
           | logical                                                                           
@@ -157,7 +165,7 @@ if_stm:
 
 else_stm:
             T_ELSE  block                             { $$ = $2;                                }
-          | /* NULL */                              
+          | /* empty */                               { $$ = stmt(T_EOS, 2, NULL, NULL);        }         
           ;
 
 while_stm:
@@ -169,28 +177,28 @@ in_stm:
           ;
 
 out_stm:
-            T_OUT expressions T_EOS                   { $$ = stmt(T_OUT, 1, $2);                }                     
+            T_OUT T_ID T_EOS                          { $$ = stmt(T_OUT, 1, getSymbol($2));     }
+          | T_OUT string T_EOS                        { $$ = stmt(T_OUT, 1, $2);                } 
+          | T_OUT expressions T_EOS                   { $$ = stmt(T_OUT, 1, $2);                }   
           ;
 
 outl_stm:
-            T_OUTL expressions T_EOS                  { $$ = stmt(T_OUTL, 1, $2);               }                     
+            T_OUTL T_ID T_EOS                         { $$ = stmt(T_OUTL, 1, getSymbol($2));    }
+          | T_OUTL string T_EOS                       { $$ = stmt(T_OUTL, 1, $2);               } 
+          | T_OUTL expressions T_EOS                  { $$ = stmt(T_OUTL, 1, $2);               }
           ;
 
-type:
-            T_ID                                      { $$ = getSymbol($1);                     }
-          | primitives                                { $$ = $1;                                }
-          ;
-
-primitives:
-            T_NUMBER                                  { dataValue _data;
-                                                        d_type = 0;
-                                                        _data.num = $1; 
-                                                        $$ = constant(_data, d_type);       }
-
-          | T_STRING                                  { dataValue _data;
+string:   T_STRING                                    { dataValue _data;
                                                         d_type = 1;
                                                         _data.str = strdup($1);
-                                                        $$ = constant(_data, d_type);               }
+                                                        $$ = constant(_data, d_type);           }
+          ;
+
+number:
+          T_NUMBER                                    { dataValue _data;
+                                                        d_type = 0;
+                                                        _data.num = $1; 
+                                                        $$ = constant(_data, d_type);           }
           ;
 %%
 

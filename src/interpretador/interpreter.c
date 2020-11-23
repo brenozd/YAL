@@ -350,7 +350,7 @@ dataValue execNode(node *_node)
         {
             node *n = _node->stmt.op[0];
             dataValue n1 = execNode(n);
-            if ((n->cnt.type == d_NUMBER) || (n->id.type == d_NUMBER))
+            if ((n->cnt.type == d_NUMBER) || (n->id.type == d_NUMBER) || (n->type == t_Statement))
             {
                 fprintf(yycmd, "printed %lf\n", n1.num);
                 printf("%lf\n", n1.num);

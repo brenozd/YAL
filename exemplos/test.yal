@@ -1,6 +1,11 @@
 _init {
     let vA = 4;
-    let vB = 5;
-    outl vA;
-    outl vB;
+    let vB = 'Breno';
+
+    while(vA > 0)
+    {
+        out 'Valor vA: ';
+        outl vA;
+        vA -= 1;
+    }
 }

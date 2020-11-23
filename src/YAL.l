@@ -11,7 +11,7 @@
 
 # include "YAL.tab.h"
 
-int n_line = 0;
+int n_line = 1;
 
 extern FILE* yytokens;
 extern void yyerror(const char *s);
@@ -27,7 +27,9 @@ quote "\'"
 %%
     /*Symbols*/
 ";"                                                     { fprintf(yytokens, "T_EOS ");
-                                                          return T_EOS;  } 
+                                                          return T_EOS;  }
+","                                                     { fprintf(yytokens, "T_SPRT ");
+                                                          return T_SPRT;  }
 ")"                                                     { fprintf(yytokens, "T_LP ");
                                                           return T_LP;   }
 "("                                                     { fprintf(yytokens, "T_RP ");

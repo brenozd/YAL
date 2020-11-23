@@ -5,31 +5,36 @@ typedef enum
 {
     t_Constant,
     t_Id,
-    t_Statement,
+    t_Statement
 
 } nodeEnum;
 
-typedef enum
+typedef enum _dataType
 {
-    d_INT,
-    d_BOOL,
-    d_FLOAT,
-    d_CHAR,
+    d_NUMBER = 0,
     d_STRING
-} data_type;
+} dataType;
+
+typedef union _dataValue
+{
+    char *str;
+    double num;
+} dataValue;
 
 typedef struct _constNode
 {
-    int value;
-    data_type type;
+    dataType type;
+    dataValue data;
 } constNode;
 
 typedef struct _idNode
 {
-    int value;
-    data_type type;
+
     char *name;
-    struct _idNode *next;
+    dataType type;
+    dataValue data;
+
+    struct _node *next;
 } idNode;
 
 typedef struct _stmtNode

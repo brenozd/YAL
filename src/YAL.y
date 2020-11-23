@@ -6,22 +6,25 @@
 #include "../src/interpretador/interpreter.c"
 
 #define DEBUG 0
+#define YYERROR_VERBOSE 1
 
 extern int yylex();
 extern int yyparse();
+extern int n_line;
 
 extern FILE* yyin;
 FILE* yytokens;
 FILE* yycmd; 
+
+int d_type = 0;
 
 /* Prototypes */
 void yyerror(const char* s);
 %}
 
 %union {
-    char* str_val;
-    int   int_val;
-    float float_val;
+    char*   str_val;
+    double  num_val;
 
     char* id_name;
     struct _node *nPtr;            
@@ -40,11 +43,10 @@ void yyerror(const char* s);
 
 //Types
 %token <id_name> T_ID
+%token <num_val> T_NUMBER 
+%token <str_val> T_STRING 
 %left T_LET
 %right T_ASSGN
-%token <int_val> T_INTEGER T_BOOLEAN
-%token <float_val> T_FLOAT 
-%token <str_val> T_CHAR T_STRING 
 
 //IO
 %right T_IN T_OUT T_OUTL
@@ -77,7 +79,7 @@ program:
           ;
 
 entry_point:
-          entry_point statement_list                  { execNode($2); }//freeNode($2);          }
+          entry_point statement_list                  { execNode($2); freeNode($2);          }
           | /* NULL */
           ;
 
@@ -106,7 +108,7 @@ commands:
           ;
 
 declare: 
-            T_LET T_ID T_ASSGN expressions T_EOS      { id($2); $$ = stmt(T_ASSGN, 2, $2, $4);  }
+            T_LET T_ID T_ASSGN expressions T_EOS      { id($2, d_type); $$ = stmt(T_ASSGN, 2, $2, $4);}
             ;
 
 assign:
@@ -118,7 +120,7 @@ assign:
           ;
 
 expressions:
-            type                                                                                 
+            type                                      { $$ = $1;      }                                                                                 
           | arithmetic                                         
           | relational                               
           | logical                                                                           
@@ -176,15 +178,19 @@ outl_stm:
 
 type:
             T_ID                                      { $$ = getSymbol($1);                     }
-          | primitives
+          | primitives                                { $$ = $1;                                }
           ;
 
 primitives:
-            T_INTEGER                                 { $$ = constant($1);                      }
-          | T_FLOAT                                   { $$ = constant($1);                      }
-          | T_CHAR                                    { $$ = constant($1);                      }
-          | T_STRING                                  { $$ = constant($1);                      }
-          | T_BOOLEAN                                 { $$ = constant($1);                      }
+            T_NUMBER                                  { dataValue _data;
+                                                        d_type = 0;
+                                                        _data.num = $1; 
+                                                        $$ = constant(_data, d_type);       }
+
+          | T_STRING                                  { dataValue _data;
+                                                        d_type = 1;
+                                                        _data.str = strdup($1);
+                                                        $$ = constant(_data, d_type);               }
           ;
 %%
 
@@ -213,6 +219,7 @@ void main(int argc, char **argv)
 
 void yyerror(const char *s)
 {
-  fprintf(stderr, "ERROR: %s\n", s);
-  exit(-1);
+  fprintf(stderr, "In line %d: ", n_line);
+  fprintf(stderr, "%s\n", s);
+  exit(1);
 }

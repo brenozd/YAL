@@ -36,7 +36,7 @@ all: cleand $(APPNAME)
 $(APPNAME) : $(LEX_FILES) $(YACC_FILES)
 	@echo "🚧 Building..."
 	test -d $(BIN) || mkdir $(BIN)
-	$(CXX) $(CXX_FLAGS) $^ -o  $(BIN)/$@.out $(LD_FLAGS)
+	$(CXX) $(CXX_FLAGS) $^ -lm -o  $(BIN)/$@.out $(LD_FLAGS)
 
 #Run executable
 .PHONY: run

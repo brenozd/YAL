@@ -3,11 +3,15 @@ _init {
     let resultado = 1;
 
     in variavelA;
-
+    let x = variavelA;
+    
     while(variavelA > 0){
         resultado *=  variavelA;
         variavelA -=  1;
     }
-    
+
+    out 'Fatorial de ';
+    out x;
+    out ' e igual a: ';
     outl resultado;
 }

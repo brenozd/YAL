@@ -1,6 +1,8 @@
 %option noyywrap
 %option caseless
-%x C_COMMENT
+
+%x COMMENT
+%x STRING
 
 %{
 #include <stdio.h>
@@ -12,18 +14,18 @@
 int n_line = 0;
 
 extern FILE* yytokens;
+extern void yyerror(const char *s);
+
 %}
 
     /* Definitions */
 alpha [a-zA-Z]
 special [_$]
 digit [0-9]
-quote "'"
+quote "\'"
 
 %%
     /*Symbols*/
-"'"                                                     { fprintf(yytokens, "T_QUOTE "); 
-                                                          return T_QUOTE;}
 ";"                                                     { fprintf(yytokens, "T_EOS ");
                                                           return T_EOS;  } 
 ")"                                                     { fprintf(yytokens, "T_LP ");
@@ -42,34 +44,25 @@ quote "'"
 "}"|"end"                                               { fprintf(yytokens, "T_BLOCK_E "); 
                                                           return T_BLOCK_E; }
 
-"<!"            { BEGIN(C_COMMENT); }
-<C_COMMENT>"!>" { BEGIN(INITIAL); }
-<C_COMMENT>\n   { }
-<C_COMMENT>.    { }
-
+"#"                                                     { BEGIN(COMMENT); }
+<COMMENT>"#"                                            { BEGIN(INITIAL); }
+<COMMENT>\n                                             { n_line++;       }
+<COMMENT>.                                              { }
+<COMMENT><<EOF>>                                        { yyerror("Unexpected end of comment"); }
     /*Types*/
 "let"                                                   { fprintf(yytokens, "T_LET ");
                                                           return T_LET; }
 
-{digit}+                                                { fprintf(yytokens, "T_INTEGER "); 
-                                                          yylval.int_val = atoi(yytext); 
-                                                          return T_INTEGER;         }
+{digit}+("."{digit}*)?                                  { fprintf(yytokens, "T_NUMBER "); 
+                                                          yylval.num_val = atof(yytext);
+                                                          return T_NUMBER;          }
 
-{digit}*"."{digit}+                                     { fprintf(yytokens, "T_FLOAT "); 
-                                                          yylval.float_val = atoi(yytext);
-                                                          return T_FLOAT;           }
-
-{quote}({alpha}|{digit}|{special}){quote}               { fprintf(yytokens, "T_CHAR "); 
-                                                          yylval.str_val = strdup(yytext); 
-                                                          return T_CHAR;            }
-
-{quote}({alpha}|{digit}|{special}){2,}{quote}           { fprintf(yytokens, "T_STRING "); 
-                                                          yylval.str_val = strdup(yytext);
-                                                          return T_STRING;          }
-
-[("true")|("false")]                                    { fprintf(yytokens, "T_BOOL "); 
-                                                          yylval.int_val = atoi(yytext);
-                                                          return T_BOOLEAN;         }
+{quote}                                                 { BEGIN(STRING);                   }
+<STRING>{quote}                                         { fprintf(yytokens, "T_STRING ");
+                                                          BEGIN(INITIAL); 
+                                                          return T_STRING;                 }
+<STRING>[^"\'"]*                                        { yylval.str_val = strdup(yytext); }                                        
+<STRING><<EOF>>                                         { yyerror("Unexpected end of string"); }
 
     /*IO*/
 "in"|"<<"                                               { fprintf(yytokens, "T_IN ");       return T_IN;    }
@@ -114,5 +107,5 @@ quote "'"
                                                           return T_ID;              }
 
     /*Anything*/
-.                                                       { printf("Unkown expression %s in line %d", yytext, n_line); }
+.                                                       { printf("Unkown expression %s in line %d\n", yytext, n_line); }
 %%

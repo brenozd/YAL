@@ -3,7 +3,8 @@ _init{
     in variavelA;
     while(variavelA > 0)
     {
+        out 'vA: ';
         outl variavelA;
-        variavelA -= 1;
+        variavelA -= 0.5;
     }
 }

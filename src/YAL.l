@@ -25,6 +25,12 @@ digit [0-9]
 quote "\'"
 
 %%
+    /*Definitions*/
+"def"                                                   { fprintf(yytokens, "T_DEF ");
+                                                          return T_DEF;             }
+"precision"                                             { fprintf(yytokens, "D_PRECISION ");
+                                                          return D_PRECISION;             }
+                                                          
     /*Symbols*/
 ";"                                                     { fprintf(yytokens, "T_EOS ");
                                                           return T_EOS;  }
@@ -51,6 +57,7 @@ quote "\'"
 <COMMENT>\n                                             { n_line++;       }
 <COMMENT>.                                              { }
 <COMMENT><<EOF>>                                        { yyerror("Unexpected end of comment"); }
+
     /*Types*/
 "let"                                                   { fprintf(yytokens, "T_LET ");
                                                           return T_LET; }

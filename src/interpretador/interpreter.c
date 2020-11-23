@@ -17,6 +17,9 @@ extern FILE *yycmd;
 extern int n_line;
 extern void yyerror(const char *s);
 
+//Define NUMBER precision to print
+int precision = 2;
+
 //Get a specific symbol from id_table
 node *getSymbol(char const *name)
 {
@@ -32,7 +35,7 @@ void checkSymbols()
 {
     for (node *p = id_table; p; p = p->next)
     {
-        printf("[%s, %lf]\n", p->id.name, p->id.data.num);
+        printf("[%s, %.*lf]\n", p->id.name, precision, p->id.data.num);
     }
 }
 
@@ -54,7 +57,7 @@ node *constant(dataValue t_data, int type)
     if (_node->cnt.type == d_NUMBER)
     {
         _node->cnt.data.num = t_data.num;
-        fprintf(yycmd, "creating constant %lf\n", _node->cnt.data.num);
+        fprintf(yycmd, "creating constant %.*lf\n", precision, _node->cnt.data.num);
     }
     else
     {
@@ -177,14 +180,14 @@ dataValue execNode(node *_node)
                 if(n2->cnt.type == d_NUMBER || n2->id.type == d_NUMBER || n2->type == t_Statement)
                 {
                     dataValue v = execNode(_node->stmt.op[1]);
-                    fprintf(yycmd, "assigned value %lf to %s\n", v.num, n1->id.name);
+                    fprintf(yycmd, "assigned value %.*lf to %s\n", precision, v.num, n1->id.name);
                     n1->id.type = d_NUMBER;
                     return n1->id.data = v;
                 }
                 else
                 {
                     dataValue v = execNode(_node->stmt.op[1]);
-                    fprintf(yycmd, "assigned value %s to %s\n", v.str, n1->id.name);
+                    fprintf(yycmd, "assigned value %s to %s\n", precision, v.str, n1->id.name);
                     n1->id.type = d_STRING;
                     return n1->id.data = v;
                 }
@@ -206,7 +209,7 @@ dataValue execNode(node *_node)
                 
                 n->id.data.num += v.num;
                 r.num = n->id.data.num;
-                fprintf(yycmd, "summed value %lf to %s\n", v.num, n->id.name);
+                fprintf(yycmd, "summed value %.*lf to %s\n", precision, v.num, n->id.name);
                 return r;
             }
             else
@@ -226,7 +229,7 @@ dataValue execNode(node *_node)
                 
                 n->id.data.num -= v.num;
                 r.num = n->id.data.num;
-                fprintf(yycmd, "subtracted value %lf from %s\n", v.num, n->id.name);
+                fprintf(yycmd, "subtracted value %.*lf from %s\n", precision, v.num, n->id.name);
                 return r;
             }
             else
@@ -246,7 +249,7 @@ dataValue execNode(node *_node)
                 
                 n->id.data.num *= v.num;
                 r.num = n->id.data.num;
-                fprintf(yycmd, "multiplied value from %s by %lf\n", n->id.name, v.num);
+                fprintf(yycmd, "multiplied value from %s by %.*lf\n", precision, n->id.name, v.num);
                 return r;
             }
             else
@@ -266,7 +269,7 @@ dataValue execNode(node *_node)
                 
                 n->id.data.num /= v.num;
                 r.num = n->id.data.num;
-                fprintf(yycmd, "divided value %lf by %lf\n", v.num, n->id.data.num);
+                fprintf(yycmd, "divided value %.*lf by %.*lf\n", precision, v.num, precision, n->id.data.num);
                 return r;
             }
             else
@@ -308,19 +311,28 @@ dataValue execNode(node *_node)
 ---------------------------------------------------------------------------------*/
         case T_IN:
         {
-            double v = 0;
-            scanf("%lf", &v);
             char *name = strdup((char*)_node->stmt.op[0]);
             node *n = getSymbol(name);
-            if (n != NULL)
+            if(n == NULL)
             {
-                n->id.data.num = v;
+                printf("Variable %s does not exist", name);
+                exit(0);
+            }
+
+            char* v = malloc(256);
+            scanf("%s", v);
+            double num = atof(v);
+            if(num != 0.0)
+            {
+                n->id.data.num = num;
+                n->id.type = d_NUMBER;
                 return n->id.data;
             }
             else
             {
-                printf("Variable %s does not exist", name);
-                exit(0);
+                n->id.data.str = v;
+                n->id.type = d_STRING;
+                return n->id.data;
             }
         }
 
@@ -330,8 +342,8 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(n);
             if ((n->cnt.type == d_NUMBER) || (n->id.type == d_NUMBER))
             {
-                fprintf(yycmd, "printed %lf\n", n1.num);
-                printf("%lf", n1.num);
+                fprintf(yycmd, "printed %.*lf\n", precision, n1.num);
+                printf("%.*lf", precision, n1.num);
             }
             else
             {
@@ -348,8 +360,8 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(n);
             if ((n->cnt.type == d_NUMBER) || (n->id.type == d_NUMBER) || (n->type == t_Statement))
             {
-                fprintf(yycmd, "printed %lf\n", n1.num);
-                printf("%lf\n", n1.num);
+                fprintf(yycmd, "printed %.*lf\n", precision, n1.num);
+                printf("%.*lf\n", precision, n1.num);
             }
             else
             {
@@ -368,7 +380,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num + n2.num;
-            fprintf(yycmd, "summed %lf and %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "summed %.*lf and %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -385,7 +397,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num - n2.num;
-            fprintf(yycmd, "subtracted %lf and %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "subtracted %.*lf and %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -394,7 +406,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num * n2.num;
-            fprintf(yycmd, "multiplied %lf and %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "multiplied %.*lf and %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -403,7 +415,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num / n2.num;
-            fprintf(yycmd, "divided %lf and %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "divided %.*lf and %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -412,7 +424,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = fmod(n1.num, n2.num);
-            fprintf(yycmd, "calculated %lf mod %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "calculated %.*lf mod %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -424,7 +436,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num > n2.num;
-            fprintf(yycmd, "checked if %lf is great than %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "checked if %.*lf is great than %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -433,7 +445,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num >= n2.num;
-            fprintf(yycmd, "checked if %lf is great or equal than %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "checked if %.*lf is great or equal than %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -442,7 +454,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num < n2.num;
-            fprintf(yycmd, "checked if %lf is less than %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "checked if %.*lf is less than %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -451,7 +463,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num <= n2.num;
-            fprintf(yycmd, "checked if %lf is less or equal than %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "checked if %.*lf is less or equal than %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -460,7 +472,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num == n2.num;
-            fprintf(yycmd, "checked if %lf is equal to %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "checked if %.*lf is equal to %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -469,7 +481,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num == n2.num;
-            fprintf(yycmd, "checked if %lf is different from %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "checked if %.*lf is different from %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -481,7 +493,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num && n2.num;
-            fprintf(yycmd, "logical AND between %lf and %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "logical AND between %.*lf and %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -490,7 +502,7 @@ dataValue execNode(node *_node)
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
             r.num = n1.num || n2.num;
-            fprintf(yycmd, "logical OR between %lf and %lf\n", n1.num, n2.num);
+            fprintf(yycmd, "logical OR between %.*lf and %.*lf\n", precision, n1.num, precision, n2.num);
             return r;
         }
 
@@ -498,7 +510,7 @@ dataValue execNode(node *_node)
             {
             dataValue n1 = execNode(_node->stmt.op[0]);
             r.num = !n1.num;
-            fprintf(yycmd, "denied %lf\n", n1.num);
+            fprintf(yycmd, "denied %.*lf\n", precision, n1.num);
             return r;
         }
 

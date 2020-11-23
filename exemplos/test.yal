@@ -1,5 +1,8 @@
-_init {
-    vA = 10;
-    vA = 'Breno';
+def precision 2;
+
+_init 
+{
+    let vA = 0;
+    in vA;
     outl vA;
 }

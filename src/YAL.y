@@ -12,6 +12,8 @@ extern int yylex();
 extern int yyparse();
 extern int n_line;
 
+extern int precision;
+
 extern FILE* yyin;
 FILE* yytokens;
 FILE* yycmd; 
@@ -33,6 +35,10 @@ void yyerror(const char* s);
 //Program Entry Point
 %start program
 
+//Def
+%token T_DEF
+%token D_PRECISION
+
 //Symbols
 %token T_BLOCK_B T_BLOCK_E
 %token T_QUOTE T_LP T_RP
@@ -44,6 +50,7 @@ void yyerror(const char* s);
 //Types
 %token <id_name> T_ID
 %token <num_val> T_NUMBER 
+%token <num_val> T_SNUM 
 %token <str_val> T_STRING 
 %left T_LET
 %right T_ASSGN
@@ -77,7 +84,12 @@ void yyerror(const char* s);
 %%
 
 program: 
-          T_INIT  entry_point  
+          definitions T_INIT entry_point  
+          ;
+
+definitions:
+            T_DEF D_PRECISION T_NUMBER T_EOS            { precision = $3; }
+          | /* NULL */
           ;
 
 entry_point:
@@ -127,7 +139,7 @@ expressions:
             number                                    { $$ = $1;                                }
           | T_ID                                      { node *n = getSymbol($1);                
                                                         if(n->id.type == d_STRING) 
-                                                          yyerror("2 - String values cannot be used in expressions");
+                                                          yyerror("String values cannot be used in expressions");
                                                         $$ = n;                                 }
           | string                                    { yyerror("String values cannot be used in expressions"); }  
           | arithmetic                                         

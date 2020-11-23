@@ -114,8 +114,9 @@ declare:
           | T_LET T_ID T_ASSGN string T_EOS           { id($2, d_type); $$ = stmt(T_ASSGN, 2, $2, $4);}
             ;
 
-assign:
-            T_ID T_ASSGN expressions T_EOS            { $$ = stmt(T_ASSGN, 2, $1, $3);          }
+assign:     
+            T_ID T_ASSGN string T_EOS                 { $$ = stmt(T_ASSGN, 2, $1, $3);          }
+          | T_ID T_ASSGN expressions T_EOS            { $$ = stmt(T_ASSGN, 2, $1, $3);          }
           | T_ID T_SUME expressions T_EOS             { $$ = stmt(T_SUME, 2, $1, $3);           }
           | T_ID T_SUBE expressions T_EOS             { $$ = stmt(T_SUBE, 2, $1, $3);           }
           | T_ID T_MULTE expressions T_EOS            { $$ = stmt(T_MULTE, 2, $1, $3);          }

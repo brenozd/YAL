@@ -119,7 +119,7 @@ node *stmt(int opr, int num_operators, ...)
     va_start(args, num_operators);
     for (size_t i = 0; i < num_operators; i++)
     {
-        _node->stmt.op[i] = va_arg(args, node *);
+        _node->stmt.op[i] = va_arg(args, node*);
     }
     va_end(args);
 
@@ -170,28 +170,24 @@ dataValue execNode(node *_node)
         case T_ASSGN:
         {
             char *name = strdup((char*)_node->stmt.op[0]);
-            node *n = getSymbol(name);
-            if (n != NULL)
+            node *n1 = getSymbol(name);
+            node *n2 = _node->stmt.op[1];
+            if (n1 != NULL)
             {
-                switch (n->id.type)
-                {
-                case d_NUMBER:
+                if(n2->cnt.type == d_NUMBER || n2->id.type == d_NUMBER || n2->type == t_Statement)
                 {
                     dataValue v = execNode(_node->stmt.op[1]);
-                    fprintf(yycmd, "assigned value %lf to %s\n", v.num, n->id.name);
-                    return n->id.data = v;
+                    fprintf(yycmd, "assigned value %lf to %s\n", v.num, n1->id.name);
+                    n1->id.type = d_NUMBER;
+                    return n1->id.data = v;
                 }
-                case d_STRING:
+                else
                 {
                     dataValue v = execNode(_node->stmt.op[1]);
-                    fprintf(yycmd, "assigned value %s to %s\n", v.str, n->id.name);
-                    return n->id.data = v;
+                    fprintf(yycmd, "assigned value %s to %s\n", v.str, n1->id.name);
+                    n1->id.type = d_STRING;
+                    return n1->id.data = v;
                 }
-                
-                default:
-                    break;
-                }
-                
             }
             else
             {

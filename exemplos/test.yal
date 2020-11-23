@@ -2,7 +2,18 @@ def precision 2;
 
 _init 
 {
-    let vA = 0;
-    in vA;
-    outl vA;
+    let vA;
+    let vB;
+    out 'vA: '; in vA;
+    out 'vB: '; in vB;
+
+    if((!vA == 1))
+    {
+        outl 'vA and vB';
+    }
+    else
+    {
+        out 'vA: '; outl vA;
+        out 'vB: '; outl vB;
+    }
 }

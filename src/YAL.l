@@ -1,5 +1,6 @@
 %option noyywrap
 %option caseless
+%option yylineno
 
 %x COMMENT
 %x STRING
@@ -11,10 +12,9 @@
 
 # include "YAL.tab.h"
 
-int n_line = 1;
-
 extern FILE* yytokens;
 extern void yyerror(const char *s);
+extern int yylineno;
 
 %}
 
@@ -40,8 +40,7 @@ quote "\'"
                                                           return T_LP;   }
 "("                                                     { fprintf(yytokens, "T_RP ");
                                                           return T_RP;   }
-"\n"([ \t])*                                            { fprintf(yytokens, "\n");   
-                                                          n_line++;  }    
+"\n"([ \t])*                                            { fprintf(yytokens, "\n");  }    
 [ \t]                                                   { /* ignore whitespace */   }
 
     /*Blocks*/
@@ -54,7 +53,7 @@ quote "\'"
 
 "#"                                                     { BEGIN(COMMENT); }
 <COMMENT>"#"                                            { BEGIN(INITIAL); }
-<COMMENT>\n                                             { n_line++;       }
+<COMMENT>\n                                             {                 }
 <COMMENT>.                                              { }
 <COMMENT><<EOF>>                                        { yyerror("Unexpected end of comment"); }
 
@@ -116,5 +115,5 @@ quote "\'"
                                                           return T_ID;              }
 
     /*Anything*/
-.                                                       { printf("Unkown expression %s in line %d\n", yytext, n_line); }
+.                                                       { printf("Unkown expression %s in line %d\n", yytext, yylineno); }
 %%

@@ -10,9 +10,10 @@
 
 extern int yylex();
 extern int yyparse();
-extern int n_line;
+extern int yylineno;
 
 extern int precision;
+extern int max_length;
 
 extern FILE* yyin;
 FILE* yytokens;
@@ -84,12 +85,17 @@ void yyerror(const char* s);
 %%
 
 program: 
-          definitions T_INIT entry_point  
+          definitios_list T_INIT entry_point  
+          ;
+
+definitios_list:
+            definitions                                 
+          | definitios_list definitions
+          | /* NULL */
           ;
 
 definitions:
-            T_DEF D_PRECISION T_NUMBER T_EOS            { precision = $3; }
-          | /* NULL */
+            T_DEF D_PRECISION T_NUMBER T_EOS          { precision = $3;                       }
           ;
 
 entry_point:
@@ -124,6 +130,7 @@ commands:
 declare: 
             T_LET T_ID T_ASSGN expressions T_EOS      { id($2, d_type); $$ = stmt(T_ASSGN, 2, $2, $4);}
           | T_LET T_ID T_ASSGN string T_EOS           { id($2, d_type); $$ = stmt(T_ASSGN, 2, $2, $4);}
+          | T_LET T_ID T_EOS                          { $$ = id($2, 0);                               }
             ;
 
 assign:     
@@ -144,7 +151,7 @@ expressions:
           | string                                    { yyerror("String values cannot be used in expressions"); }  
           | arithmetic                                         
           | relational                               
-          | logical                                                                           
+          | logical            
           ;
 
 arithmetic:
@@ -164,16 +171,18 @@ relational:
           | expressions T_LESS expressions            { $$ = stmt(T_LESS, 2, $1,  $3);          }
           | expressions T_GE expressions              { $$ = stmt(T_GE, 2, $1,  $3);            }
           | expressions T_LE expressions              { $$ = stmt(T_LE, 2, $1,  $3);            }
+          | T_RP expressions T_LP                     { $$ = $2;                                } 
           ;
 
 logical:
             expressions T_AND expressions             { $$ = stmt(T_AND, 2, $1,  $3);           }
           | expressions T_OR expressions              { $$ = stmt(T_OR, 2, $1,  $3);            }
-          | expressions T_NOT expressions             { $$ = stmt(T_NOT, 2, $1, $3);            }
+          | T_NOT expressions                         { $$ = stmt(T_NOT, 1, $2);                }
+          | T_RP expressions T_LP                     { $$ = $2;                                } 
           ;
 
 if_stm:
-            T_IF T_RP relational T_LP block else_stm  { $$ = stmt(T_IF, 3, $3, $5, $6);         }
+            T_IF T_RP expressions T_LP block else_stm  { $$ = stmt(T_IF, 3, $3, $5, $6);         }
           ;
 
 else_stm:
@@ -240,7 +249,7 @@ void main(int argc, char **argv)
 
 void yyerror(const char *s)
 {
-  fprintf(stderr, "In line %d: ", n_line);
+  fprintf(stderr, "In line %d: ", yylineno);
   fprintf(stderr, "%s\n", s);
   exit(1);
 }

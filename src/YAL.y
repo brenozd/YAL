@@ -244,9 +244,24 @@ void main(int argc, char **argv)
   yydebug = DEBUG;
   #endif
 
+  if(argc == 1)
+  {
+    printf("Theres no file to be executed\n");
+    exit(0);
+  }
+
   yyin = fopen(argv[1], "r");
-	yytokens = fopen(argv[2], "w+");
-  yycmd = fopen(argv[3], "w+");
+  if(yyin == NULL)
+  {
+    printf("File [%s] not found\n", argv[1]);
+    exit(0);
+  }
+  
+  char* token_file = argc <= 2 ? "tokens.txt" : strdup(argv[2]);
+  char* command_file = argc <= 3 ? "commands.txt" : strdup(argv[3]);
+
+	yytokens = fopen(token_file, "w+");
+  yycmd = fopen(command_file, "w+");
   
   
   if(yyparse())

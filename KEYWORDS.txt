@@ -1,0 +1,74 @@
+*******************************************
+********************DEFS*******************
+*******************************************
+def -> define diretrizes como precisão e tipo de arredondamento
+
+precision -> define o número de casas decimais de um número, limite de 24 casas decimais;
+
+round -> define o tipo de arredondamento utilizado, 0 para NEAREST, 1 para UP, 2 para DOWN
+
+*******************************************
+******************BLOCOS*******************
+*******************************************
+_init -> entry point do programa
+
+begin -> delimita o ínicio de um bloco
+
+end -> delimita o ínicio de um bloco
+
+#comentário# -> delimita um bloco de comentário
+
+*******************************************
+*****************COMANDOS******************
+*******************************************
+LET -> marcador de declaração de variável, não necessita de tipo
+
+in  -> insere um valor digital pelo programa em uma variável, não necessita de tipo
+<<  -> igual o in
+
+out -> printa um valor de uma expressão ou variável sem quebra de linha 
+>> -> igual o out
+
+outl -> printa um valor de uma expressão ou variável com quebra de linha
+/>> -> igual o outl
+
+if -> condicional
+else -> condicional
+while -> loop
+
+pi -> retorna o valor de pi
+
+*******************************************
+****************OPERADORES*****************
+*******************************************
+
+= -> operador de atribuição
++= -> operador composto de atribuição soma
+-= -> operador composto de atribuição subtracão
+/= -> operador composto de atribuição divisão
+*= -> operador composto de atribuição multiplicação
+
++ -> operador de soma
+- -> operador de subtracão
+* -> operador de multiplicação
+/ -> operador de divisão
+% -> operador de módulo
+^ -> operador de potência
+sin -> operador para seno, ângulo em radianos
+cos -> operador para cosseno, ângulo em radianos
+tan -> operador para tangente, ângulo em radianos
+
+== -> operador comparação de igualdade
+!= -> operador comparação de diferença
+<> -> operador comparação de diferença
+< -> operador comparação de menor
+> -> operador comparação de maior
+<= -> operador comparação de menor igual
+>= -> operador comparação de maior igual
+
+and -> logical AND
+&& -> logical AND
+or -> logical OR
+|| -> logical OR
+not -> logical NOT
+! -> logical NOT

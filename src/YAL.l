@@ -30,6 +30,9 @@ quote "\'"
                                                           return T_DEF;             }
 "precision"                                             { fprintf(yytokens, "D_PRECISION ");
                                                           return D_PRECISION;             }
+"round"                                                 { fprintf(yytokens, "D_ROUND_TYPE ");
+                                                          return D_ROUND_TYPE;             }
+
                                                           
     /*Symbols*/
 ";"                                                     { fprintf(yytokens, "T_EOS ");
@@ -92,6 +95,7 @@ quote "\'"
 "*"                                                     { fprintf(yytokens, "T_MULT ");     return T_MULT;  }
 "/"                                                     { fprintf(yytokens, "T_DIV ");      return T_DIV;   }
 "%"                                                     { fprintf(yytokens, "T_MOD ");      return T_MOD;   }
+"^"                                                     { fprintf(yytokens, "T_POW ");      return T_POW;   }
 
     /* Composite */
 "+="                                                    { fprintf(yytokens, "T_SUME ");     return T_SUME;  }

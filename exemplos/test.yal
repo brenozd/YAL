@@ -1,19 +1,8 @@
-def precision 2;
+def precision 10;
+def round 2;
 
 _init 
 {
-    let vA;
-    let vB;
-    out 'vA: '; in vA;
-    out 'vB: '; in vB;
-
-    if((!vA == 1))
-    {
-        outl 'vA and vB';
-    }
-    else
-    {
-        out 'vA: '; outl vA;
-        out 'vB: '; outl vB;
-    }
+    let vA = 0.4999;
+    outl vA;
 }

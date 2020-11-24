@@ -13,7 +13,8 @@ extern int yyparse();
 extern int yylineno;
 
 extern int precision;
-extern int max_length;
+extern int round_type;
+
 
 extern FILE* yyin;
 FILE* yytokens;
@@ -38,7 +39,7 @@ void yyerror(const char* s);
 
 //Def
 %token T_DEF
-%token D_PRECISION
+%token D_PRECISION D_ROUND_TYPE
 
 //Symbols
 %token T_BLOCK_B T_BLOCK_E
@@ -63,6 +64,7 @@ void yyerror(const char* s);
 %left T_EQUAL T_DIF T_GREAT T_LESS T_GE T_LE
 
 //Arithmetich
+%right T_POW
 %left T_NEGATIVE
 %left T_SUM T_SUB  
 %left T_MULT T_DIV
@@ -85,17 +87,20 @@ void yyerror(const char* s);
 %%
 
 program: 
-          definitios_list T_INIT entry_point  
+          definitions_list T_INIT entry_point  
           ;
 
-definitios_list:
+definitions_list:
             definitions                                 
-          | definitios_list definitions
+          | definitions_list definitions
           | /* NULL */
           ;
 
 definitions:
-            T_DEF D_PRECISION T_NUMBER T_EOS          { precision = $3;                       }
+            T_DEF D_PRECISION T_NUMBER T_EOS          { precision = trunc(fmod($3, 10));
+                                                        fprintf(yycmd, "define precision for number as [%d]\n", precision); }
+          | T_DEF D_ROUND_TYPE T_NUMBER T_EOS         { round_type = trunc(fmod($3, 3));
+                                                        fprintf(yycmd, "define round type to [%d]\n", round_type); }
           ;
 
 entry_point:
@@ -160,6 +165,7 @@ arithmetic:
           | expressions T_MULT expressions            { $$ = stmt(T_MULT, 2, $1,  $3);          }
           | expressions T_DIV expressions             { $$ = stmt(T_DIV, 2, $1,  $3);           }
           | expressions T_MOD expressions             { $$ = stmt(T_MOD, 2, $1,  $3);           }
+          | expressions T_POW expressions             { $$ = stmt(T_POW, 2, $1,  $3);           }
           | T_SUB expressions                         { $$ = stmt(T_NEGATIVE, 1, $2);           }
           | T_RP expressions T_LP                     { $$ = $2;                                }                        
           ;
@@ -171,14 +177,12 @@ relational:
           | expressions T_LESS expressions            { $$ = stmt(T_LESS, 2, $1,  $3);          }
           | expressions T_GE expressions              { $$ = stmt(T_GE, 2, $1,  $3);            }
           | expressions T_LE expressions              { $$ = stmt(T_LE, 2, $1,  $3);            }
-          | T_RP expressions T_LP                     { $$ = $2;                                } 
           ;
 
 logical:
             expressions T_AND expressions             { $$ = stmt(T_AND, 2, $1,  $3);           }
           | expressions T_OR expressions              { $$ = stmt(T_OR, 2, $1,  $3);            }
           | T_NOT expressions                         { $$ = stmt(T_NOT, 1, $2);                }
-          | T_RP expressions T_LP                     { $$ = $2;                                } 
           ;
 
 if_stm:
@@ -219,7 +223,7 @@ string:   T_STRING                                    { dataValue _data;
 number:
           T_NUMBER                                    { dataValue _data;
                                                         d_type = 0;
-                                                        _data.num = $1; 
+                                                        _data.num = round($1); 
                                                         $$ = constant(_data, d_type);           }
           ;
 %%

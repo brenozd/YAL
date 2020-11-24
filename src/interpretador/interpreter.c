@@ -20,8 +20,25 @@ extern void yyerror(const char *s);
 
 //Define NUMBER precision to print
 int precision = 2;
-//Define max length for string in IN operator
-int max_length = 256;
+
+//Define round type (0 = near, 1 = up, 2 = down)
+int round_type = 0;
+
+//Round to selected type based on precision
+double round(double _value)
+{
+    switch (round_type)
+    {
+    case 0: //NEAR
+        return roundf(_value * pow(10, precision)) / pow(10, precision);
+    case 1: //UP
+        return ceilf(_value * pow(10, precision)) / pow(10, precision);
+    case 2: //DOWN
+        return floorf(_value * pow(10, precision)) / pow(10, precision);
+    default:
+        return roundf(_value * pow(10, precision)) / pow(10, precision);
+    }
+}
 
 //Flush stdin
 void flush_in()
@@ -66,7 +83,7 @@ node *constant(dataValue t_data, int type)
     _node->cnt.type = type;
     if (_node->cnt.type == d_NUMBER)
     {
-        _node->cnt.data.num = t_data.num;
+        _node->cnt.data.num = round(t_data.num);
         fprintf(yycmd, "creating constant [%.*lf]\n", precision, _node->cnt.data.num);
     }
     else
@@ -212,9 +229,9 @@ dataValue execNode(node *_node)
             if (n != NULL)
             {
                 dataValue v = execNode(_node->stmt.op[1]);
-                
                 n->id.data.num += v.num;
                 r.num = n->id.data.num;
+                n->id.data.num = round(n->id.data.num);
                 fprintf(yycmd, "summed value [%.*lf] to [%s]\n", precision, v.num, n->id.name);
                 return r;
             }
@@ -235,6 +252,7 @@ dataValue execNode(node *_node)
                 
                 n->id.data.num -= v.num;
                 r.num = n->id.data.num;
+                n->id.data.num = round(n->id.data.num);
                 fprintf(yycmd, "subtracted value [%.*lf] from [%s]\n", precision, v.num, n->id.name);
                 return r;
             }
@@ -255,6 +273,7 @@ dataValue execNode(node *_node)
                 
                 n->id.data.num *= v.num;
                 r.num = n->id.data.num;
+                n->id.data.num = round(n->id.data.num);
                 fprintf(yycmd, "multiplied value from [%s] by [%.*lf]\n", n->id.name, precision, v.num);
                 return r;
             }
@@ -274,6 +293,7 @@ dataValue execNode(node *_node)
                 dataValue v = execNode(_node->stmt.op[1]);
                 
                 n->id.data.num /= v.num;
+                n->id.data.num = round(n->id.data.num);
                 r.num = n->id.data.num;
                 fprintf(yycmd, "divided value [%.*lf] by [%.*lf]\n", precision, v.num, precision, n->id.data.num);
                 return r;
@@ -342,7 +362,7 @@ dataValue execNode(node *_node)
             }   
             double num = atof(v);
             n->id.type = d_NUMBER;
-            n->id.data.num = num;
+            n->id.data.num = round(num);
             free(v);
             fprintf(yycmd, "assigned value [%.*lf] to [%s]\n", precision, n->id.data.num, n->id.name);
             return n->id.data;
@@ -352,7 +372,7 @@ dataValue execNode(node *_node)
         {
             node *n = _node->stmt.op[0];
             dataValue n1 = execNode(n);
-            if ((n->cnt.type == d_NUMBER) || (n->id.type == d_NUMBER))
+            if ((n->cnt.type == d_NUMBER) || (n->id.type == d_NUMBER) || (n->type == t_Statement))
             {
                 fprintf(yycmd, "printed [%.*lf]\n", precision, n1.num);
                 printf("%.*lf", precision, n1.num);
@@ -388,11 +408,20 @@ dataValue execNode(node *_node)
 /*---------------------------------------------------------------------------------
                                      Arithmetic
 ---------------------------------------------------------------------------------*/
+        case T_POW:
+        {
+            dataValue n1 = execNode(_node->stmt.op[0]);
+            dataValue n2 = execNode(_node->stmt.op[1]);
+            r.num = round(pow(n1.num, n2.num));
+            fprintf(yycmd, "calculate [%.*lf] to the power of [%.*lf]\n", precision, n1.num, precision, n2.num);
+            return r;
+        }
+
         case T_SUM:
         {
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
-            r.num = n1.num + n2.num;
+            r.num = round(n1.num + n2.num);
             fprintf(yycmd, "summed [%.*lf] and [%.*lf]\n", precision, n1.num, precision, n2.num);
             return r;
         }
@@ -400,7 +429,7 @@ dataValue execNode(node *_node)
         case T_NEGATIVE:
         {
             dataValue n1 = execNode(_node->stmt.op[0]);
-            r.num =  0 - n1.num;
+            r.num =  round(0 - n1.num);
             return r;
         }
             
@@ -409,7 +438,7 @@ dataValue execNode(node *_node)
         {
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
-            r.num = n1.num - n2.num;
+            r.num = round(n1.num - n2.num);
             fprintf(yycmd, "subtracted [%.*lf] and [%.*lf]\n", precision, n1.num, precision, n2.num);
             return r;
         }
@@ -418,7 +447,7 @@ dataValue execNode(node *_node)
         {
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
-            r.num = n1.num * n2.num;
+            r.num = round(n1.num * n2.num);
             fprintf(yycmd, "multiplied [%.*lf] and [%.*lf]\n", precision, n1.num, precision, n2.num);
             return r;
         }
@@ -427,7 +456,7 @@ dataValue execNode(node *_node)
         {
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
-            r.num = n1.num / n2.num;
+            r.num = round(n1.num / n2.num);
             fprintf(yycmd, "divided [%.*lf] and [%.*lf]\n", precision, n1.num, precision, n2.num);
             return r;
         }
@@ -436,7 +465,7 @@ dataValue execNode(node *_node)
         {
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
-            r.num = fmod(n1.num, n2.num);
+            r.num = round(fmod(n1.num, n2.num));
             fprintf(yycmd, "calculated [%.*lf] mod [%.*lf]\n", precision, n1.num, precision, n2.num);
             return r;
         }
@@ -493,7 +522,7 @@ dataValue execNode(node *_node)
         {
             dataValue n1 = execNode(_node->stmt.op[0]);
             dataValue n2 = execNode(_node->stmt.op[1]);
-            r.num = n1.num == n2.num;
+            r.num = n1.num != n2.num;
             fprintf(yycmd, "checked if [%.*lf] is different from [%.*lf]\n", precision, n1.num, precision, n2.num);
             return r;
         }

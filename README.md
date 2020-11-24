@@ -15,8 +15,12 @@ In this project we used:
 Just type
 > make
 
-to build and run.
+to build, this will create and executable inside bin folder.
 
+To execute a script, type:
+>./YAL.out [A] [B] [C]
+
+whete A must be the scriipt file path, B must be a path to a file where tokens will be written to and C must be a path to a file where commands will be writen to.
 ### Useful information
 * [Byson 3.7.1 Rules](https://www.gnu.org/software/bison/manual/bison.html#Rules)
 * [Flex 2.6.3 Manual](https://www.cs.virginia.edu/~cr4bd/flex-manual/)

@@ -1,8 +1,0 @@
-def precision 5;
-def round 0;
-
-_init 
-{
-    let vA = pi;
-    outl sin(vA/3);
-}

@@ -52,7 +52,7 @@ void yyerror(const char* s);
 //Types
 %token <id_name> T_ID
 %token <num_val> T_NUMBER 
-%token <num_val> T_SNUM 
+%token <num_val> T_PI
 %token <str_val> T_STRING 
 %left T_LET
 %right T_ASSGN
@@ -64,7 +64,8 @@ void yyerror(const char* s);
 %left T_EQUAL T_DIF T_GREAT T_LESS T_GE T_LE
 
 //Arithmetich
-%right T_POW
+%left T_SIN T_COS T_TAN
+%right T_POW T_SQRT
 %left T_NEGATIVE
 %left T_SUM T_SUB  
 %left T_MULT T_DIV
@@ -97,7 +98,7 @@ definitions_list:
           ;
 
 definitions:
-            T_DEF D_PRECISION T_NUMBER T_EOS          { precision = trunc(fmod($3, 10));
+            T_DEF D_PRECISION T_NUMBER T_EOS          { precision = trunc(fmod($3, 25));
                                                         fprintf(yycmd, "define precision for number as [%d]\n", precision); }
           | T_DEF D_ROUND_TYPE T_NUMBER T_EOS         { round_type = trunc(fmod($3, 3));
                                                         fprintf(yycmd, "define round type to [%d]\n", round_type); }
@@ -136,7 +137,7 @@ declare:
             T_LET T_ID T_ASSGN expressions T_EOS      { id($2, d_type); $$ = stmt(T_ASSGN, 2, $2, $4);}
           | T_LET T_ID T_ASSGN string T_EOS           { id($2, d_type); $$ = stmt(T_ASSGN, 2, $2, $4);}
           | T_LET T_ID T_EOS                          { $$ = id($2, 0);                               }
-            ;
+          ;
 
 assign:     
             T_ID T_ASSGN string T_EOS                 { $$ = stmt(T_ASSGN, 2, $1, $3);          }
@@ -156,7 +157,11 @@ expressions:
           | string                                    { yyerror("String values cannot be used in expressions"); }  
           | arithmetic                                         
           | relational                               
-          | logical            
+          | logical
+          | T_PI                                      { dataValue _data;
+                                                        d_type = 0;
+                                                        _data.num = M_PI; 
+                                                        $$ = constant(_data, d_type);           }            
           ;
 
 arithmetic:
@@ -166,6 +171,10 @@ arithmetic:
           | expressions T_DIV expressions             { $$ = stmt(T_DIV, 2, $1,  $3);           }
           | expressions T_MOD expressions             { $$ = stmt(T_MOD, 2, $1,  $3);           }
           | expressions T_POW expressions             { $$ = stmt(T_POW, 2, $1,  $3);           }
+          | T_SQRT  T_RP expressions T_LP             { $$ = stmt(T_SQRT, 1, $3);               }
+          | T_SIN   T_RP expressions T_LP             { $$ = stmt(T_SIN, 1, $3);                }
+          | T_COS   T_RP expressions T_LP             { $$ = stmt(T_COS, 1, $3);                }
+          | T_TAN   T_RP expressions T_LP             { $$ = stmt(T_TAN, 1, $3);                }
           | T_SUB expressions                         { $$ = stmt(T_NEGATIVE, 1, $2);           }
           | T_RP expressions T_LP                     { $$ = $2;                                }                        
           ;
@@ -186,7 +195,7 @@ logical:
           ;
 
 if_stm:
-            T_IF T_RP expressions T_LP block else_stm  { $$ = stmt(T_IF, 3, $3, $5, $6);         }
+            T_IF T_RP expressions T_LP block else_stm  { $$ = stmt(T_IF, 3, $3, $5, $6);        }
           ;
 
 else_stm:

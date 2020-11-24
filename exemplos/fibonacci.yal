@@ -1,0 +1,30 @@
+def precision 0;
+def round 0;
+
+_init 
+{
+    outl 'Fibonacci';
+    let n = 0;
+    let t1 = 0;
+    let t2 = 1;
+    let nextTerm = 0;
+    let i = 3;
+
+    out 'n: '; in n;
+    if(n == 0 or n == 1)
+    {
+        outl n;
+    }
+    else
+    {
+        nextTerm = t1 + t2;
+        while(i <= n)
+        {
+            i += 1;
+            t1 = t2;
+            t2 = nextTerm;
+            nextTerm = t1 + t2;
+        }
+    }
+    outl t2;   
+}

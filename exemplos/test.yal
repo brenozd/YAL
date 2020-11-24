@@ -1,10 +1,8 @@
-def precision 9;
+def precision 5;
 def round 0;
 
 _init 
 {
-    let vA = 0.4999;
-    let _vA = 0.109;
-    outl _vA;
-    outl vA;
+    let vA = pi;
+    outl sin(vA/3);
 }

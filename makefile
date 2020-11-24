@@ -8,7 +8,7 @@ YACC_FLAGS = -dtvy -o
 
 CXX = gcc
 CXX_FLAGS = -g -DYYDEBUG=1
-LD_FLAGS = 
+LD_FLAGS = -lm
 
 APPNAME = YAL
 ARGS =
@@ -36,7 +36,7 @@ all: cleand $(APPNAME)
 $(APPNAME) : $(LEX_FILES) $(YACC_FILES)
 	@echo "🚧 Building..."
 	test -d $(BIN) || mkdir $(BIN)
-	$(CXX) $(CXX_FLAGS) $^ -lm -o  $(BIN)/$@.out $(LD_FLAGS)
+	$(CXX) $(CXX_FLAGS) $^ -o  $(BIN)/$@.out $(LD_FLAGS)
 
 #Run executable
 .PHONY: run

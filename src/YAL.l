@@ -97,6 +97,12 @@ quote "\'"
 "%"                                                     { fprintf(yytokens, "T_MOD ");      return T_MOD;   }
 "^"                                                     { fprintf(yytokens, "T_POW ");      return T_POW;   }
 
+"sin"                                                   { fprintf(yytokens, "T_SIN ");      return T_SIN;   }
+"cos"                                                   { fprintf(yytokens, "T_COS ");      return T_COS;   } 
+"tan"                                                   { fprintf(yytokens, "T_TAN ");      return T_TAN;   }        
+
+"pi"                                                    { fprintf(yytokens, "T_PI ");       return T_PI;    }
+
     /* Composite */
 "+="                                                    { fprintf(yytokens, "T_SUME ");     return T_SUME;  }
 "-="                                                    { fprintf(yytokens, "T_SUBE ");     return T_SUBE;  }

@@ -470,6 +470,30 @@ dataValue execNode(node *_node)
             return r;
         }
 
+        case T_SIN:
+        {
+            dataValue n1 = execNode(_node->stmt.op[0]);
+            r.num = round(sin(n1.num));
+            fprintf(yycmd, "calculate sine of [%.*lf]\n", precision, n1.num);
+            return r;
+        }
+
+        case T_COS:
+        {
+            dataValue n1 = execNode(_node->stmt.op[0]);
+            r.num = round(cos(n1.num));
+            fprintf(yycmd, "calculate cossine of [%.*lf]\n", precision, n1.num);
+            return r;
+        }
+
+        case T_TAN:
+        {
+            dataValue n1 = execNode(_node->stmt.op[0]);
+            r.num = round(tan(n1.num));
+            fprintf(yycmd, "calculate tangent of [%.*lf]\n", precision, n1.num);
+            return r;
+        }
+
 /*---------------------------------------------------------------------------------
                                     Relational                                    
 ---------------------------------------------------------------------------------*/

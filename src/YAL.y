@@ -150,7 +150,7 @@ assign:
 expressions:
             number                                    { $$ = $1;                                }
           | T_ID                                      { node *n = getSymbol($1);                
-                                                        if(n->id.type == d_STRING) 
+                                                        if(n == NULL || n->id.type == d_STRING) 
                                                           yyerror("String values cannot be used in expressions");
                                                         $$ = n;                                 }
           | string                                    { yyerror("String values cannot be used in expressions"); }  

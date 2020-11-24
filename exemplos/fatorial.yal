@@ -1,8 +1,13 @@
-_init {
+def precision 0;
+def round 0;
+
+_init 
+{
+    outl 'Fatorial';
     let variavelA = 0;
     let resultado = 1;
 
-    in variavelA;
+    out 'vA: '; in variavelA;
     let x = variavelA;
     
     while(variavelA > 0){

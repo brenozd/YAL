@@ -351,20 +351,20 @@ dataValue execNode(node *_node)
             flush_in();
             for(int i = 0; i < strlen(v); i++)
             {
-                if(isdigit(v[i]) == 0)
+                if(isdigit(v[i]) != 0 || v[i] == '.')
                 {
-                    n->id.type = d_STRING;
-                    n->id.data.str = strdup(v);
+                    double num = atof(v);
+                    n->id.type = d_NUMBER;
+                    n->id.data.num = round(num);
                     free(v);
-                    fprintf(yycmd, "assigned value [%s] to [%s]\n", n->id.data.str, n->id.name);
+                    fprintf(yycmd, "assigned value [%.*lf] to [%s]\n", precision, n->id.data.num, n->id.name);
                     return n->id.data;
                 }
             }   
-            double num = atof(v);
-            n->id.type = d_NUMBER;
-            n->id.data.num = round(num);
+            n->id.type = d_STRING;
+            n->id.data.str = strdup(v);
             free(v);
-            fprintf(yycmd, "assigned value [%.*lf] to [%s]\n", precision, n->id.data.num, n->id.name);
+            fprintf(yycmd, "assigned value [%s] to [%s]\n", n->id.data.str, n->id.name);
             return n->id.data;
         }
 

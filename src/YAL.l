@@ -114,7 +114,7 @@ quote "\'"
 "else"                                                  { fprintf(yytokens, "T_ELSE");      return T_ELSE;  }
 
     /*Declaration*/
-({alpha}|{special}|{digit})({alpha}|{digit})*           { fprintf(yytokens, "T_ID "); 
+({alpha}|{special})({alpha}|{digit}|{special})*         { fprintf(yytokens, "T_ID "); 
                                                           yylval.id_name = strdup(yytext);
                                                           return T_ID;              }
 

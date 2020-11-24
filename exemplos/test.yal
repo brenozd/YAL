@@ -1,8 +1,10 @@
-def precision 10;
-def round 2;
+def precision 9;
+def round 0;
 
 _init 
 {
     let vA = 0.4999;
+    let _vA = 0.109;
+    outl _vA;
     outl vA;
 }

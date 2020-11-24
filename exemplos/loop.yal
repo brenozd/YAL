@@ -1,10 +1,19 @@
-_init{
-    let variavelA = 10;
-    in variavelA;
+def precision 9;
+def round 0;
+
+_init
+{
+    outl 'Loop testing';
+    let variavelA;
+    let step;
+
+    out 'vA: '; in variavelA;
+    out 'step: '; in step;
+
+    outl '';
     while(variavelA > 0)
     {
-        out 'vA: ';
-        outl variavelA;
-        variavelA -= 0.5;
+        out 'vA: '; outl variavelA;
+        variavelA -= step;
     }
 }

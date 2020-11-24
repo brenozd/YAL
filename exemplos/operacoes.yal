@@ -1,9 +1,17 @@
+def precision 2;
+def round 0;
+
 _init begin
-    let variavelA = 10;
-    let variavelB = 3;
+    oult 'Operations';
+    let variavelA;
+    let variavelB;
+
+    out 'A: '; in variavelA;
+    out 'B: '; in variavelB;
     
-    outl variavelA - variavelB;
-    outl variavelA * variavelB;
-    outl variavelA / variavelB;
-    outl variavelA % variavelB;
+    out '+ '; outl variavelA + variavelB;
+    out '- '; outl variavelA - variavelB;
+    out '* '; outl variavelA * variavelB;
+    out '/ '; outl variavelA / variavelB;
+    out '% '; outl variavelA % variavelB;
 end

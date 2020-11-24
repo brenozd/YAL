@@ -3,22 +3,31 @@ def round 2;
 
 _init 
 {
+    outl 'Armstrong';
     let num;
-    let original = 0;
+    
     let remainder = 0;
     let result = 0;
+    let o_num = 0;
+    let n = 0;
 
     out 'enter a number: '; 
     in num;
 
-    original = num;
+    o_num = num;
 
-    while(original != 0)
+    while(o_num != 0)
     {
-        remainder = original % 10;
-        outl remainder;
-        result += remainder ^ 3;
-        original /= 10;
+        o_num /= 10;
+        n += 1;
+    }
+
+    o_num = num;
+    while(o_num != 0)
+    {
+        remainder = o_num % 10;
+        result += remainder ^ n;
+        o_num /= 10;
     }
 
     if(result == num)
